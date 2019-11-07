@@ -2,7 +2,7 @@
 # __Author__ == "Haowen Xu"
 # __Date__ == "05-04-2018"
 
-class Basic_model():
+class Basic_regressor():
     def __init__(self, config=None, exp_name='new_exp'):
         self.config = config
         self.exp_name = exp_name
