@@ -1,6 +1,4 @@
 """ utilities """
-# __Author__ == "Haowen Xu"
-# __Date__ == "05-04-2018"
 
 import os, sys
 import random
@@ -98,8 +96,6 @@ def range(data):
         data[i] = (data[i] - min) / (max-min)
     return data
 
-        
-        
 def label(df_train):
 
     #price
@@ -176,14 +172,14 @@ def label(df_train):
     df_train['Lot'] = df_train['Lot'].replace('^\$\d+\Wmonth','',regex=True)
     df_train['Lot'] = df_train['Lot'].replace('^\$\d+', '', regex=True)
     df_train['Lot'] = df_train['Lot'].replace('^No Data', '', regex=True)
-    
+
     rows_with_sqft = df_train['Lot'].str.contains('sqft').fillna(False)
     df_train[rows_with_sqft]
     #trans from sqft to scres
     for i, sqft_row in df_train[rows_with_sqft].iterrows():
         area = str(float(sqft_row['Lot'][:-5])/43560)
         df_train['Lot'][i] = '{} sqft'.format(area)
-    
+
     df_train['Lot'] = df_train['Lot'].replace("[\ssqft]+", '', regex=True)
     df_train['Lot'] = df_train['Lot'].replace("[\sacres]+", '', regex=True)
     df_train['Lot'] = pd.to_numeric(df_train['Lot'])
@@ -220,5 +216,5 @@ def preprocessing(input_file):
     df_train = df_train.fillna('No Data').replace('#NAME?', 'No Data').rename(
         columns={'Heaitng': 'Heating', 'Title': 'Address'})  # drop NaN and other no data
     data = label(df_train)
-    
+
     raise NotImplementedError

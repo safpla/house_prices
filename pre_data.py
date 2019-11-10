@@ -135,8 +135,10 @@ def label(df_train):
 
     return data
 
-def pre_data():
-    df_train = pd.read_csv("train100.csv")
+def pre_data(datafile=None):
+    if datafile is None:
+        datafile = "train100.csv"
+    df_train = pd.read_csv(datafile)
     df_train = df_train.drop(columns=['Title_link', 'list-card-variable-text', 'Thumbnail'])
     df_train = df_train.fillna('No Data').replace('#NAME?', 'No Data').rename(
         columns={'Heaitng': 'Heating', 'Title': 'Address'})  # drop NaN and other no data
