@@ -169,9 +169,9 @@ def label(df_train,type):
     df_train.drop(to_drop, inplace=True, axis=1)
 
     if type == 1:
-        df_train.to_csv('.\output_HOA.csv')
+        df_train.to_csv('.\Data\output_HOA.csv')
     if type == 0:
-        df_train.to_csv('.\output_LOT.csv')
+        df_train.to_csv('.\Data\output_LOT.csv')
 
 
 
@@ -183,15 +183,15 @@ def label(df_train,type):
     return dataset
 
 def pre_data():
-    if os.path.exists('.\output_HOA.csv'):
-        data1 = pd.read_csv(".\output_HOA.csv")
+    if os.path.exists('.\Data\output_HOA.csv'):
+        data1 = pd.read_csv(".\Data\output_HOA.csv")
         target = data1['Zestimate'].values
         data1.drop(['Zestimate'], inplace=True, axis=1)
         data = data1.values
         data_HOA = housedata(data,target)
 
     else:
-        data1 = pd.read_csv("Zillow_dataset_v1.0_HOA.csv")
+        data1 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
         data1 = data1.drop(columns=['Sunscore'])
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data').rename(
             columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',
@@ -200,15 +200,15 @@ def pre_data():
                      'HOA fee': 'HF'})  # drop NaN and other no data
         data_HOA = label(train1, 1)
 
-    if os.path.exists('.\output_LOT.csv'):
-        data2 = pd.read_csv(".\output_LOT.csv")
+    if os.path.exists('.\Data\output_LOT.csv'):
+        data2 = pd.read_csv(".\Data\output_LOT.csv")
         target = data2['Zestimate'].values
         data2.drop(['Zestimate'], inplace=True, axis=1)
         data = data2.values
         data_LOT = housedata(data, target)
 
     else:
-        data2 = pd.read_csv("Zillow_dataset_v1.0_Lot.csv")
+        data2 = pd.read_csv(".\Data\Zillow_dataset_v1.0_Lot.csv")
         data2 = data2.drop(columns=['Sunscore'])
         train2 = data2.fillna('No Data').replace('#NAME?', 'No Data').rename(
             columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',
@@ -226,15 +226,15 @@ def pre_data():
 if __name__ == "__main__":
 
 
-    if os.path.exists('.\output_HOA.csv'):
-        data1 = pd.read_csv(".\output_HOA.csv")
+    if os.path.exists('.\Data\output_HOA.csv'):
+        data1 = pd.read_csv(".\Data\output_HOA.csv")
         target = data1['Zestimate'].values
         data1.drop(['Zestimate'], inplace=True, axis=1)
         data = data1.values
         data_HOA = housedata(data,target)
 
     else:
-        data1 = pd.read_csv("Zillow_dataset_v1.0_HOA.csv")
+        data1 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
         data1 = data1.drop(columns=['Sunscore'])
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data').rename(
             columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',
@@ -243,15 +243,16 @@ if __name__ == "__main__":
                      'HOA fee': 'HF'})  # drop NaN and other no data
         data_HOA = label(train1, 1)
 
-    if os.path.exists('.\output_LOT.csv'):
-        data2 = pd.read_csv(".\output_LOT.csv")
+    if os.path.exists('.\Data\output_LOT.csv'):
+        data2 = pd.read_csv(".\Data\output_LOT.csv")
         target = data2['Zestimate'].values
         data2.drop(['Zestimate'], inplace=True, axis=1)
         data = data2.values
         data_LOT = housedata(data, target)
 
     else:
-        data2 = pd.read_csv("Zillow_dataset_v1.0_Lot.csv")
+        data2 = pd.read_csv(".\Data\Zillow_dataset_v1.0_Lot.csv")
+
         data2 = data2.drop(columns=['Sunscore'])
         train2 = data2.fillna('No Data').replace('#NAME?', 'No Data').rename(
             columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',
