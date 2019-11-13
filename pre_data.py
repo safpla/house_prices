@@ -159,7 +159,7 @@ def label(df_train,type):
     df_train['HF'] = range(df_train['HF'])
     #
     # #Address
-    df_train['Address'] = df_train['Address'].str.extract('GA (30\d+)')  # extract zip code from address
+    df_train['Address'] = df_train['Address'].str.extract(r'.*(\d{5}(\-\d{4})?)$')  # extract zip code from address
     df_train['Address'].replace(np.nan, 'No Data', inplace=True)
     df_train['Address'].value_counts()
 
