@@ -224,8 +224,6 @@ def pre_data():
 
 
 if __name__ == "__main__":
-
-
     if os.path.exists('.\Data\output_HOA.csv'):
         data1 = pd.read_csv(".\Data\output_HOA.csv")
         target = data1['Zestimate'].values
