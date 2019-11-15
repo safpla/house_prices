@@ -4,8 +4,9 @@ import os, sys
 import random
 import numpy as np
 
-root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+root_path = os.path.dirname((os.path.realpath(__file__)))
 sys.path.insert(0, root_path)
+from pre_data import pre_data
 
 
 class Dataset(object):
@@ -240,7 +241,4 @@ def evaluation(predictions, targets, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
         else:
             raise NotImplementedError
     return outputs
-
-
-
 

@@ -2,12 +2,15 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import os, sys
 from pandas import DataFrame
 from sklearn.cluster import KMeans
+from sklearn.model_selection import train_test_split
 import warnings
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
+root_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, root_path)
 
 """
 input: datafile
@@ -15,18 +18,54 @@ output: dataset used for training and testing
 
 """
 
-class housedata():
+class Housedata():
     def __init__(self,data=None,target=None):
+        k = 9
         self.data = data
-        self.target=target
+        self.target = target
+        X_train, X_test, y_train, y_test = train_test_split(self.data,
+                                                            self.target,
+                                                            test_size=0.1,
+                                                            random_state=0)
+        self.test_features = X_test
+        self.test_targets = y_test
+        self.train_features = []
+        self.train_targets = []
+        for i in np.arange(k):
+            self.train_features.append([])
+            self.train_targets.append([])
+        self.valid_features = []
+        self.valid_targets = []
+        cv_features = []
+        cv_targets = []
+        split_size = round(np.shape(y_train)[0] / k)
+        for i in np.arange(k-1):
+            cv_features.append(X_train[split_size*i : split_size*(i+1), :])
+            cv_targets.append(y_train[split_size*i : split_size*(i+1)])
+        cv_features.append(X_train[split_size*(k-1) : , :])
+        cv_targets.append(y_train[split_size*(k-1) :])
+        for i in np.arange(k):
+            self.train_features
+        for i in np.arange(k):
+            for j in np.arange(k):
+                if i == j:
+                    self.valid_features.append(cv_features[i])
+                    self.valid_targets.append(cv_targets[i])
+                else:
+                    self.train_features[j].append(cv_features[i])
+                    self.train_targets[j].append(cv_targets[i])
+        for i in np.arange(k):
+            self.train_features[i] = np.concatenate(self.train_features[i])
+            self.train_targets[i] = np.concatenate(self.train_targets[i])
 
-zip_geo = pd.read_csv(
-        "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
 
-zip_geo = DataFrame(zip_geo)
-print(zip_geo.info())
 
 def Geocode(data):
+    zip_geo = pd.read_csv(
+            "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
+
+    zip_geo = DataFrame(zip_geo)
+    print(zip_geo.info())
     print("geocode",zip_geo['ZIP'][zip_geo['ZIP'] == int(11249.0)].index)
     data['lat'] = data['Address']
     data['lng'] = data['Address']
@@ -212,12 +251,20 @@ def label(df_train,type,outfile):
     target = df_train['Zestimate'].values
     df_train.drop(['Zestimate'],inplace=True,axis=1)
     data = df_train.values
-    dataset = housedata(data,target)
+    dataset = Housedata(data,target)
 
     return dataset
 
 def pre_data(data_file=None, data_type=None):
     if not data_file is None:
+        output_file = '/'.join(data_file.split('/')[0:-1]) + '/output_{}.csv'.format(data_type)
+        if os.path.exists(output_file):
+            data1 = pd.read_csv(output_file)
+            target = data1['Zestimate'].values
+            data1.drop(['Zestimate'], inplace=True, axis=1)
+            data = data1.values
+            data_ = Housedata(data, target)
+            return data_
         data1 = pd.read_csv(data_file)
         data1 = data1.drop(columns=['Sunscore'])
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data').rename(
@@ -226,10 +273,10 @@ def pre_data(data_file=None, data_type=None):
                      'Principal & interest': 'PI', 'Property taxes': 'PT', 'Home insurance': 'HI',
                      'HOA fee': 'HF'})  # drop NaN and other no data
         if data_type == 'HOA':
-            data_HOA = label(train1, 1,  '/'.join(data_file.split('/')[0:-2]) + 'output_HOA.csv')
+            data_HOA = label(train1, 1,  output_file)
             return data_HOA
         else:
-            data_LOT = label(train1, 0,  '/'.join(data_file.split('/')[0:-2]) + 'output_LOT.csv')
+            data_LOT = label(train1, 0,  output_file)
             return data_LOT
 
     if os.path.exists('..\Data\output_HOA.csv'):
@@ -237,7 +284,7 @@ def pre_data(data_file=None, data_type=None):
         target = data1['Zestimate'].values
         data1.drop(['Zestimate'], inplace=True, axis=1)
         data = data1.values
-        data_HOA = housedata(data,target)
+        data_HOA = Housedata(data,target)
 
     else:
         data1 = pd.read_csv("..\Data\Zillow_dataset_v1.0_HOA.csv")
@@ -254,7 +301,7 @@ def pre_data(data_file=None, data_type=None):
         target = data2['Zestimate'].values
         data2.drop(['Zestimate'], inplace=True, axis=1)
         data = data2.values
-        data_LOT = housedata(data, target)
+        data_LOT = Housedata(data, target)
 
     else:
         data2 = pd.read_csv("..\Data\Zillow_dataset_v1.0_Lot.csv")
@@ -275,7 +322,7 @@ if __name__ == "__main__":
         target = data1['Zestimate'].values
         data1.drop(['Zestimate'], inplace=True, axis=1)
         data = data1.values
-        data_HOA = housedata(data,target)
+        data_HOA = Housedata(data,target)
     else:
         data1 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
         print("data1")
@@ -292,7 +339,7 @@ if __name__ == "__main__":
         target = data2['Zestimate'].values
         data2.drop(['Zestimate'], inplace=True, axis=1)
         data = data2.values
-        data_LOT = housedata(data, target)
+        data_LOT = Housedata(data, target)
 
     else:
         data2 = pd.read_csv(".\Data\Zillow_dataset_v1.0_Lot.csv")
