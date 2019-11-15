@@ -218,3 +218,29 @@ def preprocessing(input_file):
     data = label(df_train)
 
     raise NotImplementedError
+
+def evaluation(predictions, targets, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
+    outputs = []
+    predictions = np.array(predictions)
+    targets = np.array(targets)
+    for metric in metrics:
+        if metric == 'MAE':
+            output = sum(abs(targets - predictions)) / len(targets)
+            outputs.append(output)
+        elif metric == 'MSE':
+            output = sum(np.square(targets - predictions)) / len(targets)
+            outputs.append(output)
+        elif metric == 'MdAPE':
+            p = abs(targets - predictions) / targets
+            outputs.append(np.median(p))
+        elif metric == '5pct':
+            p = abs(targets - predictions) / targets
+            counts = sum(p<0.05)
+            outputs.append(counts / len(targets))
+        else:
+            raise NotImplementedError
+    return outputs
+
+
+
+

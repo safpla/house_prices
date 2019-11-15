@@ -1,17 +1,20 @@
-
 """
 Random Forest Model
 
 """
-
+import os, sys
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score, cross_val_predict
-import pre_data
-from basic_regressor import Basic_regressor
 from sklearn.metrics import mean_squared_error
 import numpy as np
 
-class randomforest(Basic_regressor):
+# import local
+root_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, root_path)
+import pre_data
+from models.basic_regressor import Basic_regressor
+
+class Randomforest(Basic_regressor):
     def __init__(self, config=None, exp_name='new_exp',rfr = None):
         self.config = config
         self.exp_name = exp_name
@@ -47,7 +50,8 @@ class randomforest(Basic_regressor):
         MSE = mean_squared_error(predictions, response);
         #print("test_score",test_score)
         print("MSE",MSE)
-        print(predictions)
+        #print(predictions)
+        return predictions
 
 
 if __name__ == "__main__":
@@ -56,7 +60,7 @@ if __name__ == "__main__":
                             test_size=0.7, random_state=0)
     X_train, X_test, y_train, y_test = data
 
-    rfr_model = randomforest()
+    rfr_model = Randomforest()
     rfr_model.train(X_train,y_train)
     rfr_model.predict(X_test,y_test)
 
