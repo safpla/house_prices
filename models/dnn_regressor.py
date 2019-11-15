@@ -12,17 +12,13 @@ class DNN_regressor(Basic_regressor):
         self.config = config
         self.exp_name = exp_name
 
-    def train(features, response):
+    def train(self, features, response):
         pass
 
-    def predict(features):
+    def predict(self, features):
         pass
 
 
 
 if __name__ == "__main__":
-    datafile = os.path.join(root_path, 'Data/2019-11-7-Atlanta General-800.csv')
-    data = pre_data(datafile)
-    print(type(data))
-    print(data.keys)
-
+    pass

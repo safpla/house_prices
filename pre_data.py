@@ -216,7 +216,22 @@ def label(df_train,type,outfile):
 
     return dataset
 
-def pre_data():
+def pre_data(data_file=None, data_type=None):
+    if not data_file is None:
+        data1 = pd.read_csv(data_file)
+        data1 = data1.drop(columns=['Sunscore'])
+        train1 = data1.fillna('No Data').replace('#NAME?', 'No Data').rename(
+            columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',
+                     'Monthly cost': 'Monthcost',
+                     'Principal & interest': 'PI', 'Property taxes': 'PT', 'Home insurance': 'HI',
+                     'HOA fee': 'HF'})  # drop NaN and other no data
+        if data_type == 'HOA':
+            data_HOA = label(train1, 1,  '/'.join(data_file.split('/')[0:-2]) + 'output_HOA.csv')
+            return data_HOA
+        else:
+            data_LOT = label(train1, 0,  '/'.join(data_file.split('/')[0:-2]) + 'output_LOT.csv')
+            return data_LOT
+
     if os.path.exists('..\Data\output_HOA.csv'):
         data1 = pd.read_csv("..\Data\output_HOA.csv")
         target = data1['Zestimate'].values
@@ -252,9 +267,6 @@ def pre_data():
         data_LOT = label(train2,0, '..\Data\output_LOT.csv')
 
     return data_HOA,data_LOT
-
-
-
 
 
 if __name__ == "__main__":
@@ -293,4 +305,3 @@ if __name__ == "__main__":
         data_LOT = label(train2, 0, '.\Data\output_LOT.csv')
     print("data_HOA",data_HOA.data, data_HOA.target)
     print("data_LOT", data_LOT.data, data_LOT.target)
-   
