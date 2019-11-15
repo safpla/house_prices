@@ -3,7 +3,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-
+from pandas import DataFrame
+from sklearn.cluster import KMeans
 import warnings
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
@@ -19,7 +20,45 @@ class housedata():
         self.data = data
         self.target=target
 
+zip_geo = pd.read_csv(
+        "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
 
+zip_geo = DataFrame(zip_geo)
+print(zip_geo.info())
+
+def Geocode(data):
+    print("geocode",zip_geo['ZIP'][zip_geo['ZIP'] == int(11249.0)].index)
+    data['lat'] = data['Address']
+    data['lng'] = data['Address']
+    data['geo'] = data['Address']
+    for i, item in data.iterrows():
+        if type(item['Address']) == type(1.0) and item['Address'] is not np.nan:
+            zipcode = item['Address']
+            print(zipcode,"zipcode")
+            index = (zip_geo['ZIP'][zip_geo['ZIP'] == int(zipcode)].index)
+            print(zipcode)
+            print(index)
+            print(index[0])
+            lat = zip_geo.at[int(index[0]),'LAT']
+            lng = zip_geo.at[int(index[0]),'LNG']
+
+            data['lat'][i] = lat
+            data['lng'][i] = lng
+            data['geo'][i] = lat,lng
+
+    data['lat'] = data['lat'].replace( 'No Data', '0', regex=True)
+    data['lng'] = data['lng'].replace('No Data', '0', regex=True)
+
+    return data
+
+def cluster(data):
+    new_data = Geocode(data)
+    geolocation = np.c_[new_data['lat'], new_data['lng']]
+    print(geolocation)
+    kmeans = KMeans(n_clusters=5, random_state=0).fit(geolocation)
+    new_data['label'] = kmeans.labels_
+    print(kmeans.labels_)
+    return new_data
 
 #normalization
 def range(data):
@@ -34,7 +73,7 @@ def label(df_train,type,outfile):
     #price
     df_train['price'] = df_train['price'].replace('\D+', '', regex=True)
     df_train['price'] = pd.to_numeric(df_train['price']) # transfer the data type
-    df_train = df_train.dropna(subset=["price"])
+
     df_train['price'].hist()
     df_train['price'] = range(df_train['price'])
 
@@ -68,8 +107,7 @@ def label(df_train,type,outfile):
     #zestimate
     df_train['Zestimate'] = df_train['Zestimate'].replace('[\D]+', '', regex=True)
     df_train['Zestimate'] = pd.to_numeric(df_train['Zestimate'])  # transfer the data type
-    mean_bd = df_train['Zestimate'].mean()
-    df_train['Zestimate'] = df_train['Zestimate'].fillna(mean_bd)
+    df_train = df_train.dropna(subset=["Zestimate"])
     df_train['Zestimate'] = range(df_train['Zestimate'])
 
 
@@ -157,15 +195,16 @@ def label(df_train,type,outfile):
     mean_bd = df_train['HF'].mean()
     df_train['HF'] = df_train['HF'].fillna(mean_bd)
     df_train['HF'] = range(df_train['HF'])
-    #
+
     # #Address
     df_train['Address'] = df_train['Address'].str.extract(r'.*(\d{5}(\-\d{4})?)$')  # extract zip code from address
-    df_train['Address'].replace(np.nan, 'No Data', inplace=True)
-    df_train['Address'].value_counts()
+    df_train['Address'] = pd.to_numeric(df_train['Address'], downcast='integer')
+    df_train['Address'] = df_train['Address'].replace(np.nan, 'No Data', regex=True)
+    df_train = cluster(df_train)
 
-    onehotdata = df_train[['Address','Type','Heating','Cooling']]
+    onehotdata = df_train[['Type','Heating','Cooling']]
     df_train = df_train.join(pd.get_dummies(onehotdata))
-    to_drop = ['Address','Type','Heating','Cooling']
+    to_drop = ['Type','Heating','Cooling','lat', 'lng']
     df_train.drop(to_drop, inplace=True, axis=1)
 
     df_train.to_csv(outfile)
