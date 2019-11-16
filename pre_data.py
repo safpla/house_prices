@@ -351,6 +351,7 @@ if __name__ == "__main__":
         otherinfo = data1[['Address', 'geo']].values
         data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
         data = data1
+
         data_HOA = Housedata(data,target,otherinfo)
     else:
         data1 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
@@ -366,7 +367,7 @@ if __name__ == "__main__":
     if os.path.exists('.\Data\output_LOT.csv'):
         data2 = pd.read_csv(".\Data\output_LOT.csv")
         target = data2['Zestimate'].values
-        otherinfo = data1[['Address', 'geo']].values
+        otherinfo = data2[['Address', 'geo']].values
         data2.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
         data = data2
         data_LOT = Housedata(data, target,otherinfo)
@@ -382,5 +383,5 @@ if __name__ == "__main__":
                      'HOA fee': 'HF'})  # drop NaN and other no data
         data_LOT = label(train2, 0, '.\Data\output_LOT.csv')
 
-    print("data_HOA",data_HOA.data, data_HOA.target)
-    print("data_LOT", data_LOT.data, data_LOT.target)
+    print("data_HOA",data_HOA.data.info(), data_HOA.target)
+    print("data_LOT", data_LOT.data.info(), data_LOT.target)
