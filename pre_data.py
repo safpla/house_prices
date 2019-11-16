@@ -7,6 +7,9 @@ from pandas import DataFrame
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 import warnings
+from pandas import DataFrame
+from sklearn.utils import shuffle
+from sklearn.preprocessing import  OneHotEncoder
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
 root_path = os.path.dirname(os.path.realpath(__file__))
@@ -19,11 +22,12 @@ output: dataset used for training and testing
 """
 
 class Housedata():
-    def __init__(self,data=None,target=None):
+    def __init__(self,data=None,target=None,otherinfo=None):
         k = 9
         self.data = data
         self.target = target
-        X_train, X_test, y_train, y_test = train_test_split(self.data,
+        self.otherinfo = otherinfo
+        X_train, X_test, y_train, y_test = train_test_split(self.data.values,
                                                             self.target,
                                                             test_size=0.1,
                                                             random_state=0)
@@ -65,19 +69,13 @@ def Geocode(data):
             "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
 
     zip_geo = DataFrame(zip_geo)
-    print(zip_geo.info())
-    print("geocode",zip_geo['ZIP'][zip_geo['ZIP'] == int(11249.0)].index)
     data['lat'] = data['Address']
     data['lng'] = data['Address']
     data['geo'] = data['Address']
     for i, item in data.iterrows():
         if type(item['Address']) == type(1.0) and item['Address'] is not np.nan:
             zipcode = item['Address']
-            print(zipcode,"zipcode")
             index = (zip_geo['ZIP'][zip_geo['ZIP'] == int(zipcode)].index)
-            print(zipcode)
-            print(index)
-            print(index[0])
             lat = zip_geo.at[int(index[0]),'LAT']
             lng = zip_geo.at[int(index[0]),'LNG']
 
@@ -95,19 +93,39 @@ def cluster(data):
     geolocation = np.c_[new_data['lat'], new_data['lng']]
     print(geolocation)
     kmeans = KMeans(n_clusters=5, random_state=0).fit(geolocation)
+    print(type(kmeans.labels_))
+    print((new_data['geo']))
     new_data['label'] = kmeans.labels_
-    print(kmeans.labels_)
     return new_data
 
 #normalization
 def range(data):
     min = data.min()
     max = data.max()
-    for i, price in data.iteritems():
-        data[i] = (data[i] - min) / (max-min)
+    data = (data - min) / (max - min)
     return data
 
+def reverse(data,min,max):
+    data = data * (max - min) + min
+    return data
+
+
+
 def label(df_train,type,outfile):
+    # zestimate
+    df_train['Zestimate'] = df_train['Zestimate'].replace('[\D]+', '', regex=True)
+    df_train['Zestimate'] = pd.to_numeric(df_train['Zestimate'])  # transfer the data type
+    df_train = df_train.dropna(subset=["Zestimate"])
+    zestimate_max = df_train['Zestimate'].max()
+    zestimate_min = df_train['Zestimate'].min()
+    df_train['Zestimate'] = range(df_train['Zestimate'])
+    # drop outliers
+    df_train.sort_values(by="Zestimate", ascending=False)
+    df_train = df_train[df_train['Zestimate'] <= 0.2]
+    df_train['Zestimate'] = reverse(df_train['Zestimate'],zestimate_min,zestimate_max)
+    #renormalization
+    df_train['Zestimate'] = range(df_train['Zestimate'])
+    print(np.shape(df_train))
 
     #price
     df_train['price'] = df_train['price'].replace('\D+', '', regex=True)
@@ -143,11 +161,6 @@ def label(df_train,type,outfile):
     df_train['Area'] = range(df_train['Area'])
 
 
-    #zestimate
-    df_train['Zestimate'] = df_train['Zestimate'].replace('[\D]+', '', regex=True)
-    df_train['Zestimate'] = pd.to_numeric(df_train['Zestimate'])  # transfer the data type
-    df_train = df_train.dropna(subset=["Zestimate"])
-    df_train['Zestimate'] = range(df_train['Zestimate'])
 
 
     #Year built
@@ -239,19 +252,31 @@ def label(df_train,type,outfile):
     df_train['Address'] = df_train['Address'].str.extract(r'.*(\d{5}(\-\d{4})?)$')  # extract zip code from address
     df_train['Address'] = pd.to_numeric(df_train['Address'], downcast='integer')
     df_train['Address'] = df_train['Address'].replace(np.nan, 'No Data', regex=True)
+    print(np.shape(df_train))
     df_train = cluster(df_train)
 
+    #df_train['label'] = pd.to_numeric(df_train['label'], downcast='integer')
+    print(pd.get_dummies(df_train['label']))
+    df_train = df_train.join(pd.get_dummies(df_train['label'],prefix="label"))
+
+    print(df_train.info())
     onehotdata = df_train[['Type','Heating','Cooling']]
     df_train = df_train.join(pd.get_dummies(onehotdata))
-    to_drop = ['Type','Heating','Cooling','lat', 'lng']
+
+    to_drop = ['Type','Heating','Cooling','lat', 'lng','label']
     df_train.drop(to_drop, inplace=True, axis=1)
 
-    df_train.to_csv(outfile)
+    #shuffle the data before saving to the file
+    df_train = shuffle(df_train)
+
+    df_train.to_csv(outfile,index = 0)
 
     target = df_train['Zestimate'].values
-    df_train.drop(['Zestimate'],inplace=True,axis=1)
-    data = df_train.values
-    dataset = Housedata(data,target)
+    otherinfo = df_train[['Address','geo']].values
+    df_train.drop(['Zestimate','Address', 'geo'],inplace=True,axis=1)
+    data = df_train
+
+    dataset = Housedata(data,target,otherinfo)
 
     return dataset
 
@@ -261,9 +286,10 @@ def pre_data(data_file=None, data_type=None):
         if os.path.exists(output_file):
             data1 = pd.read_csv(output_file)
             target = data1['Zestimate'].values
-            data1.drop(['Zestimate'], inplace=True, axis=1)
-            data = data1.values
-            data_ = Housedata(data, target)
+            otherinfo = data1['Address','geo'].values
+            data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
+            data = data1
+            data_ = Housedata(data, target,otherinfo)
             return data_
         data1 = pd.read_csv(data_file)
         data1 = data1.drop(columns=['Sunscore'])
@@ -282,9 +308,10 @@ def pre_data(data_file=None, data_type=None):
     if os.path.exists('..\Data\output_HOA.csv'):
         data1 = pd.read_csv("..\Data\output_HOA.csv")
         target = data1['Zestimate'].values
-        data1.drop(['Zestimate'], inplace=True, axis=1)
-        data = data1.values
-        data_HOA = Housedata(data,target)
+        otherinfo = data1[['Address', 'geo']].values
+        data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
+        data = data1
+        data_HOA = Housedata(data,target,otherinfo)
 
     else:
         data1 = pd.read_csv("..\Data\Zillow_dataset_v1.0_HOA.csv")
@@ -299,9 +326,10 @@ def pre_data(data_file=None, data_type=None):
     if os.path.exists('..\Data\output_LOT.csv'):
         data2 = pd.read_csv("..\Data\output_LOT.csv")
         target = data2['Zestimate'].values
-        data2.drop(['Zestimate'], inplace=True, axis=1)
-        data = data2.values
-        data_LOT = Housedata(data, target)
+        otherinfo = data2[['Address', 'geo']].values
+        data2.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
+        data = data2
+        data_LOT = Housedata(data, target,otherinfo)
 
     else:
         data2 = pd.read_csv("..\Data\Zillow_dataset_v1.0_Lot.csv")
@@ -320,9 +348,11 @@ if __name__ == "__main__":
     if os.path.exists('.\Data\output_HOA.csv'):
         data1 = pd.read_csv(".\Data\output_HOA.csv")
         target = data1['Zestimate'].values
-        data1.drop(['Zestimate'], inplace=True, axis=1)
-        data = data1.values
-        data_HOA = Housedata(data,target)
+        otherinfo = data1[['Address', 'geo']].values
+        data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
+        data = data1
+
+        data_HOA = Housedata(data,target,otherinfo)
     else:
         data1 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
         print("data1")
@@ -337,9 +367,11 @@ if __name__ == "__main__":
     if os.path.exists('.\Data\output_LOT.csv'):
         data2 = pd.read_csv(".\Data\output_LOT.csv")
         target = data2['Zestimate'].values
-        data2.drop(['Zestimate'], inplace=True, axis=1)
-        data = data2.values
-        data_LOT = Housedata(data, target)
+        otherinfo = data2[['Address', 'geo']].values
+        data2.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
+        data = data2
+        data_LOT = Housedata(data, target,otherinfo)
+
 
     else:
         data2 = pd.read_csv(".\Data\Zillow_dataset_v1.0_Lot.csv")
@@ -350,5 +382,6 @@ if __name__ == "__main__":
                      'Principal & interest': 'PI', 'Property taxes': 'PT', 'Home insurance': 'HI',
                      'HOA fee': 'HF'})  # drop NaN and other no data
         data_LOT = label(train2, 0, '.\Data\output_LOT.csv')
-    print("data_HOA",data_HOA.data, data_HOA.target)
-    print("data_LOT", data_LOT.data, data_LOT.target)
+
+    print("data_HOA",data_HOA.data.info(), data_HOA.target)
+    print("data_LOT", data_LOT.data.info(), data_LOT.target)
