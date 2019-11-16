@@ -7,11 +7,11 @@ import numpy as np
 import pre_data
 
 class grid():
-    
+
     def __init__(self,model):
         self.model=model
-        
-    #Find parameters       
+
+    #Find parameters
     def grid_get(self,X,y,param_grid):
         grid_search = GridSearchCV(self.model,param_grid,cv=5, scoring="neg_mean_squared_error")
         grid_search.fit(X,y)
@@ -26,17 +26,17 @@ class ridge_regression(Basic_regressor):
     def __init__(self, config=None, exp_name='new_exp',ridge = None):
         self.config = config
         self.exp_name = exp_name
-        self.ridge = Ridge() 
-        
+        self.ridge = Ridge()
 
-    #train       
+
+    #train
     def train(self,features,response):
         alphas = np.logspace(-3,2,50)
         best_params = grid(Ridge()).grid_get(features,response,{'alpha': alphas,'max_iter':[10000]})
         self.ridge = Ridge()
         self.ridge.fit(features,response)
 
-    #predict        
+    #predict
     def predict(self,features,response):
         predictions = self.ridge.predict(features)
         print("predictions",predictions)
@@ -46,17 +46,12 @@ class ridge_regression(Basic_regressor):
         #print("MSE",MSE)
         return(predictions)
 
-        
-        
+
 if __name__ == "__main__":
     data_HOA,data_LOT = pre_data.pre_data()
     data = train_test_split(data_HOA.data, data_HOA.target,
-                            test_size=0.7, random_state=0)
+                            test_size=0.9, random_state=0)
     X_train, X_test, y_train, y_test = data
     ridge_model = ridge_regression()
     ridge_model.train(X_train,y_train)
     ridge_model.predict(X_test,y_test)
-
-
-
-
