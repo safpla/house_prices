@@ -80,24 +80,18 @@ class Randomforest(Basic_regressor):
         data = importances
         labels = columns
 
-        plt.bar(range(len(data)), data, tick_label=labels)
-        plt.show()
+        # plt.bar(range(len(data)), data, tick_label=labels)
+        # plt.show()
 
 
         print("oob_score", self.rfr.oob_score_)
 
 
 
-    def predict(self,features,response):
+    def predict(self,features):
         predictions = self.rfr.predict(features)
         print("predictions",predictions)
-        # print("response",test_score)
-        predictions.reshape(-1,1)
-        response.reshape(-1,1)
-        #test_score = np.sqrt(-cross_val_score(self.rfr, predictions, response, cv=5, scoring='neg_mean_squared_error'))
-        MSE = mean_squared_error(predictions, response);
-        #print("test_score",test_score)
-        print("MSE",MSE)
+        return predictions
 
     def evaluation(self,housedata):
         """
@@ -105,10 +99,14 @@ class Randomforest(Basic_regressor):
                 """
         k = 9
         performance = []
+        columns = housedata.data.columns
         for i in range(k):
-            self.train(housedata.train_features[i], housedata.train_targets[i])
+            self.train(housedata.train_features[i], housedata.train_targets[i],columns)
             predictions = self.predict(housedata.valid_features[i])
+            print(np.shape(housedata.valid_features[i]))
+            print(np.shape(predictions))
             targets = housedata.valid_targets[i]
+            print(np.shape(targets))
             performance.append(evaluation(predictions, targets))
         print(performance)
 
@@ -121,6 +119,8 @@ if __name__ == "__main__":
     print(otherinfo)
     X_train = data_HOA.train_features
     y_train = data_HOA.train_targets
+    X_test = data_HOA.test_features
+    y_test = data_HOA.test_targets
 
     columns = data_HOA.data.columns
     # data = train_test_split(data_HOA.data, data_HOA.target,
@@ -128,6 +128,6 @@ if __name__ == "__main__":
     # X_train, X_test, y_train, y_test = data
 
     rfr_model = Randomforest()
-    rfr_model.train(X_train[0],y_train[0],columns)
-    #rfr_model.predict(X_test,y_test)
+    rfr_model.evaluation(data_HOA)
+
 
