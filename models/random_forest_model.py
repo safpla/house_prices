@@ -41,7 +41,7 @@ class Randomforest(Basic_regressor):
 
         param_test2 = {'max_depth':range(3,14,2), 'min_samples_split':range(50,201,20)}
         gsc = GridSearchCV(
-            estimator=RandomForestRegressor(),
+            estimator=RandomForestRegressor(n_estimators=params["n_estimators"]),
             param_grid=param_test2,
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
@@ -53,7 +53,8 @@ class Randomforest(Basic_regressor):
 
         param_test3 = { 'min_samples_leaf': range(10, 60, 10)}
         gsc = GridSearchCV(
-            estimator=RandomForestRegressor(),
+            estimator=RandomForestRegressor(n_estimators=params["n_estimators"],max_depth = params["max_depth"],
+                                                 min_samples_split = params["min_samples_split"]),
             param_grid=param_test3,
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
