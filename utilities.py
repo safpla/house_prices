@@ -97,6 +97,14 @@ def range(data):
         data[i] = (data[i] - min) / (max-min)
     return data
 
+def reverse_minmax(data,min,max):
+    data=data*(max-min)+min
+    return data
+
+def reverse_meanstd(data,mean,std):
+    data=(data*std)+mean
+    return data
+
 def label(df_train):
 
     #price
