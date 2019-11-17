@@ -10,6 +10,7 @@ import warnings
 from pandas import DataFrame
 from sklearn.utils import shuffle
 from sklearn.preprocessing import  OneHotEncoder
+import json
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
 root_path = os.path.dirname(os.path.realpath(__file__))
@@ -125,13 +126,32 @@ def reverse(data,mean,std):
 
 def formhousedata(df_train):
     target = df_train['Soldprice'].values
-    otherinfo = df_train[['Address', 'lat','lng', 'Zestimate']].values
+    otherinfo = {}
+    otherinfo['initialdata'] = df_train[['Address', 'lat','lng', 'Zestimate']].values
+    # soldprice_mean = df_train['Soldprice'].mean()
+    # soldprice_std = df_train['Soldprice'].std()
+    # soldprice_min = df_train['Soldprice'].min()
+    # soldprice_max = df_train['Soldprice'].max()
+    # otherinfo['mean'] = soldprice_mean
+    # otherinfo['std'] = soldprice_std
+    # otherinfo['min'] = soldprice_min
+    # otherinfo['max'] = soldprice_max
     df_train.drop(['Zestimate', 'Address', 'lat','lng','Soldprice'], inplace=True,
                   axis=1)
     data = df_train
     dataset = Housedata(data, target, otherinfo)
     return dataset
 
+def savejson(mean,std,min,max,outfile):
+    file = open(outfile, 'w', encoding='utf-8')
+    data = {'mean': mean, "std": std, "min":min, "max":max}
+    print(data)
+    json.dump(data, file, ensure_ascii=False)
+
+def readjson(infile):
+    file = open(infile,'r',encoding='utf-8')
+    s = json.load(file)
+    print (s['mean'],s['std'],s['min'],s['max'])
 
 
 def label(df_train,type,outfile):
@@ -149,15 +169,31 @@ def label(df_train,type,outfile):
     for i, M_row in df_train[rows_with_M].iterrows():
         price = str(float(M_row['Soldprice'][:-1]) * 1000000)
         df_train['Soldprice'][i] = price
-    df_train['Soldprice'] = pd.to_numeric(df_train['Soldprice'])  # transfer the data type\
-    df_train['Soldprice'] = range(df_train['Soldprice'])
-    # drop outliers
+    df_train['Soldprice'] = pd.to_numeric(df_train['Soldprice'])  # transfer the data type
+
     soldprice_mean = df_train['Soldprice'].mean()
     soldprice_std = df_train['Soldprice'].std()
+    soldprice_min = df_train['Soldprice'].min()
+    soldprice_max = df_train['Soldprice'].max()
+    df_train['Soldprice'] = range(df_train['Soldprice'])
+
+    # drop outliers
     df_train.sort_values(by="Soldprice", ascending=False)
     df_train = df_train[df_train['Soldprice'] <= 0.2]
 
     df_train['Soldprice'] = reverse(df_train['Soldprice'], soldprice_mean, soldprice_std)
+
+    soldprice_mean = df_train['Soldprice'].mean()
+    soldprice_std = df_train['Soldprice'].std()
+    soldprice_min = df_train['Soldprice'].min()
+    soldprice_max = df_train['Soldprice'].max()
+    if type == 1:
+        jsonoutfile = '.\Data\para_HOA.json'
+        savejson(soldprice_mean, soldprice_std, soldprice_min, soldprice_max, jsonoutfile)
+    else:
+        jsonoutfile = '.\Data\para_LOT.json'
+        savejson(soldprice_mean, soldprice_std, soldprice_min, soldprice_max, jsonoutfile)
+
     # renormalization
     df_train['Soldprice'] = range(df_train['Soldprice'])
 
@@ -312,6 +348,7 @@ if __name__ == "__main__":
         data_HOA = formhousedata(data1)
         print(data_HOA.data.info())
     else:
+        print("else HOA")
         data1 = pd.read_csv(".\Data\SoldData-HOA-V1.0.csv")
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data')
         data_HOA = label(train1,1, '.\Data\output_HOA_Sold.csv')
@@ -323,6 +360,7 @@ if __name__ == "__main__":
         print(data_LOT.data.info())
 
     else:
+        print("else LOT")
         data2 = pd.read_csv(".\Data\SoldData-Lot-V1.0.csv")
         train2 = data2.fillna('No Data').replace('#NAME?', 'No Data')
         data_LOT = label(train2, 0, '.\Data\output_LOT_Sold.csv')
@@ -330,3 +368,5 @@ if __name__ == "__main__":
 
     # print("data_HOA",data_HOA.data.info(), data_HOA.target)
     # print("data_LOT", data_LOT.data.info(), data_LOT.target)
+    readjson(".\Data\para_HOA.json")
+    readjson(".\Data\para_LOT.json")
