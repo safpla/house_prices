@@ -7,11 +7,16 @@ Random Forest Model
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV,train_test_split,cross_val_score, cross_val_predict
 import pre_data
-from basic_regressor import Basic_regressor
 from sklearn.metrics import mean_squared_error
 import numpy as np
 from utilities import evaluation
 import matplotlib.pyplot as plt
+# local
+import sys, os
+root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, root_path)
+from models.basic_regressor import Basic_regressor
+
 
 class Randomforest(Basic_regressor):
     def __init__(self, config=None, exp_name='new_exp',rfr = None):
@@ -26,7 +31,7 @@ class Randomforest(Basic_regressor):
             oob_score=True,
             random_state=10)
         self.rfr.fit(features,response)
-        print("oob_score", self.rfr.oob_score_)
+        #print("oob_score", self.rfr.oob_score_)
 
         # Perform Grid-Search
         param_test1 = {'n_estimators': (10, 50, 100, 1000)}
@@ -36,7 +41,7 @@ class Randomforest(Basic_regressor):
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
         grid_result = gsc.fit(features, response)
-        print(grid_result.grid_scores_,grid_result.best_params_,grid_result.best_score_)
+        #print(grid_result.grid_scores_,grid_result.best_params_,grid_result.best_score_)
         params["n_estimators"] = grid_result.best_params_["n_estimators"]
 
         param_test2 = {'max_depth':range(3,14,2), 'min_samples_split':range(50,201,20)}
@@ -46,7 +51,7 @@ class Randomforest(Basic_regressor):
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
         grid_result = gsc.fit(features, response)
-        print(grid_result.grid_scores_, grid_result.best_params_, grid_result.best_score_)
+        #print(grid_result.grid_scores_, grid_result.best_params_, grid_result.best_score_)
         params["max_depth"] = grid_result.best_params_["max_depth"]
         params["min_samples_split"] = grid_result.best_params_["max_depth"]
 
@@ -59,7 +64,7 @@ class Randomforest(Basic_regressor):
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
         grid_result = gsc.fit(features, response)
-        print(grid_result.grid_scores_, grid_result.best_params_, grid_result.best_score_)
+        #print(grid_result.grid_scores_, grid_result.best_params_, grid_result.best_score_)
         params["min_samples_leaf"] = grid_result.best_params_["min_samples_leaf"]
 
         self.rfr = RandomForestRegressor( n_estimators=params["n_estimators"],
@@ -72,11 +77,11 @@ class Randomforest(Basic_regressor):
         self.rfr.fit(features,response)
 
         # see the importance of features
-        print(columns)
+        #print(columns)
         importances = self.rfr.feature_importances_
         indices = np.argsort(importances)[::-1]
-        for f in range(features.shape[1]):
-            print(str(f + 1), columns[indices[f]],importances[indices[f]])
+        #for f in range(features.shape[1]):
+        #    print(str(f + 1), columns[indices[f]],importances[indices[f]])
 
         data = importances
         labels = columns
@@ -85,13 +90,13 @@ class Randomforest(Basic_regressor):
         # plt.show()
 
 
-        print("oob_score", self.rfr.oob_score_)
+        #print("oob_score", self.rfr.oob_score_)
 
 
 
     def predict(self,features):
         predictions = self.rfr.predict(features)
-        print("predictions",predictions)
+        #print("predictions",predictions)
         return predictions
 
     def evaluation(self,housedata):

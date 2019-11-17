@@ -65,7 +65,6 @@ class Housedata():
             self.train_targets[i] = np.concatenate(self.train_targets[i])
 
 
-
 def Geocode(data):
     #zip_geo = pd.read_csv(
     #        "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
