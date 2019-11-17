@@ -91,6 +91,13 @@ class Dataset(object):
 
         #normalization
 
+def reverse_minmax(data,min,max):
+    data=data*(max-min)+min
+    return data
+
+def reverse_meanstd(data,mean,std):
+    data=(data*std)+mean
+    return data
 
 def evaluation(predictions, targets, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
     outputs = []

@@ -65,12 +65,12 @@ class ridge_regression(Basic_regressor):
         self.ridge.fit(features,response)
 
     #predict
-    def predict(self,features,response):
+    def predict(self,features):
         predictions = self.ridge.predict(features)
         #print("predictions",predictions)
-        predictions.reshape(-1,1)
-        response.reshape(-1,1)
-        perf = performance.evaluation(predictions,response)
+        #predictions.reshape(-1,1)
+        #response.reshape(-1,1)
+        #perf = performance.evaluation(predictions,response)
         #print("MAE, MSE, MdAPE, 5pct",perf)
         return(predictions)
 

@@ -9,5 +9,6 @@ def parse_args():
     parser.add_argument('--dnn_valid_freq', type=int, default=50)
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--max_iterations', type=int, default=20000)
+    parser.add_argument('--dnn_load_models', type=bool, default=True)
 
     return parser.parse_args()

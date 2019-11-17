@@ -23,16 +23,25 @@ output: dataset used for training and testing
 
 class Housedata():
     def __init__(self,data=None,target=None,otherinfo=None):
-        k = 9
+        k = 8
         self.data = data
         self.target = target
+        self.target_min = target.min()
+        self.target_max = target.max()
+        self.target_mean = target.mean()
+        self.target_std = target.std()
         self.otherinfo = otherinfo
         X_train, X_test, y_train, y_test = train_test_split(self.data.values,
                                                             self.target,
-                                                            test_size=0.1,
+                                                            test_size=0.2,
                                                             random_state=0)
-        self.test_features = X_test
-        self.test_targets = y_test
+        X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test,
+                                                              test_size=0.5,
+                                                              random_state=0)
+        self.test_features = X_test1
+        self.test_targets = y_test1
+        self.stacking_train_features = X_test2
+        self.stacking_train_targets = y_test2
         self.train_features_all = X_train
         self.train_targets_all = y_train
         self.train_features = []
@@ -63,7 +72,6 @@ class Housedata():
         for i in np.arange(k):
             self.train_features[i] = np.concatenate(self.train_features[i])
             self.train_targets[i] = np.concatenate(self.train_targets[i])
-
 
 
 def Geocode(data):
