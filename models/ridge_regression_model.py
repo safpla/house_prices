@@ -2,6 +2,7 @@
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split,cross_val_score, cross_val_predict,GridSearchCV
 from sklearn.metrics import mean_squared_error
+from joblib import dump, load
 import numpy as np
 import pandas as pd
 import os, sys
@@ -48,7 +49,6 @@ class performance():
                 outputs.append(counts / len(response))
         return outputs
 
-
 class ridge_regression(Basic_regressor):
 
     def __init__(self, config=None, exp_name='new_exp',ridge = None):
@@ -63,6 +63,10 @@ class ridge_regression(Basic_regressor):
         best_params = grid(Ridge()).grid_get(features,response,{'alpha': alphas,'max_iter':[10000]})
         self.ridge = Ridge(alpha=best_params['alpha'])
         self.ridge.fit(features,response)
+        saved_model_path = os.path.join(root_path, 'Models', self.exp_name)
+        dump(self.ridge, saved_model_path)
+        print('Model saved at {}'.format(saved_model_path))
+
 
     #predict
     def predict(self,features):
@@ -73,6 +77,9 @@ class ridge_regression(Basic_regressor):
         #perf = performance.evaluation(predictions,response)
         #print("MAE, MSE, MdAPE, 5pct",perf)
         return(predictions)
+
+    def load_model(self, load_model_path):
+        self.ridge = load(load_model_path)
 
 if __name__ == "__main__":
     data_HOA,data_LOT = pre_data.pre_data()

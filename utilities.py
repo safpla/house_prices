@@ -99,7 +99,11 @@ def reverse_meanstd(data,mean,std):
     data=(data*std)+mean
     return data
 
-def evaluation(predictions, targets, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
+def evaluation(predictions, targets, mean, std, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
+    #print(mean)
+    #print(std)
+    predictions = reverse_meanstd(predictions, mean, std)
+    targets = reverse_meanstd(targets, mean, std)
     outputs = []
     predictions = np.array(predictions)
     targets = np.array(targets)

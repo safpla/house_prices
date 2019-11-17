@@ -11,6 +11,7 @@ from sklearn.metrics import mean_squared_error
 import numpy as np
 from utilities import evaluation
 import matplotlib.pyplot as plt
+from joblib import dump, load
 # local
 import sys, os
 root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -75,6 +76,9 @@ class Randomforest(Basic_regressor):
                                                  random_state=False, verbose=False)
 
         self.rfr.fit(features,response)
+        saved_model_path = os.path.join(root_path, 'Models', self.exp_name)
+        dump(self.rfr, saved_model_path)
+        print('Model saved at {}'.format(saved_model_path))
 
         # see the importance of features
         #print(columns)
@@ -92,12 +96,13 @@ class Randomforest(Basic_regressor):
 
         #print("oob_score", self.rfr.oob_score_)
 
-
-
     def predict(self,features):
         predictions = self.rfr.predict(features)
         #print("predictions",predictions)
         return predictions
+
+    def load_model(self, load_model_path):
+        self.rfr = load(load_model_path)
 
     def evaluation(self,housedata):
         """

@@ -26,10 +26,12 @@ class Housedata():
         k = 8
         self.data = data
         self.target = target
-        self.target_min = target.min()
-        self.target_max = target.max()
-        self.target_mean = target.mean()
-        self.target_std = target.std()
+        #self.target_min = otherinfo['min']
+        #self.target_max = otherinfo['max']
+        #self.target_mean = otherinfo['mean']
+        #self.target_std = otherinfo['std']
+        self.target_mean = 0
+        self.target_std = 1
         self.otherinfo = otherinfo
         X_train, X_test, y_train, y_test = train_test_split(self.data.values,
                                                             self.target,
@@ -72,7 +74,6 @@ class Housedata():
         for i in np.arange(k):
             self.train_features[i] = np.concatenate(self.train_features[i])
             self.train_targets[i] = np.concatenate(self.train_targets[i])
-
 
 def Geocode(data):
     #zip_geo = pd.read_csv(
@@ -123,12 +124,9 @@ def range(data):
     data = (data - data_mean) / data_std
     return data
 
-
 def reverse(data,min,max):
     data = data * (max - min) + min
     return data
-
-
 
 def label(df_train,type,outfile):
     # zestimate

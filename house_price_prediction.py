@@ -36,13 +36,14 @@ def stacking(models, data):
     print('====Training stacking model=====')
     stacked_model = fit_stacked_model(X_stacked, y_train, X_test, y_test)
     preds = stacked_model.predict(X_stacked)
-    print('eval on training: ', evaluation(preds, y_train))
+    print('eval on training: ', evaluation(preds, y_train, data.target_mean,
+                                           data.target_std))
 
     X_stacked_test = make_stacked_data(models, X_test)
     preds = stacked_model.predict(X_stacked_test)
-    print('eval on testing: ', evaluation(preds, y_test))
-
-
+    print('eval on testing: ', evaluation(preds, y_test,
+                                          data.target_mean,
+                                          data.target_std))
 
 def weighted_average(models, data):
     X_test = data.test_features
@@ -52,7 +53,9 @@ def weighted_average(models, data):
     metrics = []
     for model in models:
         predictions = model.predict(X_test)
-        metric = evaluation(predictions, y_test)
+        metric = evaluation(predictions, y_test,
+                            data.target_mean,
+                            data.target_std)
         preds.append(predictions)
         metrics.append(metric[0])
         print(model.exp_name, ': ', metric)
@@ -60,7 +63,9 @@ def weighted_average(models, data):
     weights = 1 / np.array(metrics)
     weights = weights / np.sum(weights)
     wave_pred = np.matmul(weights, preds)
-    print('WAve: ', evaluation(wave_pred, y_test))
+    print('WAve: ', evaluation(wave_pred, y_test,
+                               data.target_mean,
+                               data.target_std))
 
 def train_models(data):
     config = parse_args()
@@ -89,13 +94,21 @@ def train_models(data):
 
     print('Training random forest')
     rfr_model = Randomforest(exp_name='random_forest')
-    columns = data.data.columns
-    rfr_model.train(X_train, y_train, columns)
+    if config.rfr_load_models:
+        load_model_path = os.path.join(root_path, 'Models', 'random_forest')
+        rfr_model.load_model(load_model_path)
+    else:
+        columns = data.data.columns
+        rfr_model.train(X_train, y_train, columns)
     models.append(rfr_model)
 
     print('Training ridge regression')
     rr_model = ridge_regression(exp_name='ridge_regression')
-    rr_model.train(X_train, y_train)
+    if config.rr_load_models:
+        load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
+        rr_model.load_model(load_model_path)
+    else:
+        rr_model.train(X_train, y_train)
     models.append(rr_model)
 
     return models
@@ -111,4 +124,4 @@ if __name__ == '__main__':
     #data_LOT = pre_data(data_file_LOT, data_type='LOT')
     models = train_models(data_HOA)
     weighted_average(models, data_HOA)
-    #stacking(models, data_HOA)
+    stacking(models, data_HOA)
