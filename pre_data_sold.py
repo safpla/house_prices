@@ -126,16 +126,7 @@ def reverse(data,mean,std):
 
 def formhousedata(df_train):
     target = df_train['Soldprice'].values
-    otherinfo = {}
-    otherinfo['initialdata'] = df_train[['Address', 'lat','lng', 'Zestimate']].values
-    # soldprice_mean = df_train['Soldprice'].mean()
-    # soldprice_std = df_train['Soldprice'].std()
-    # soldprice_min = df_train['Soldprice'].min()
-    # soldprice_max = df_train['Soldprice'].max()
-    # otherinfo['mean'] = soldprice_mean
-    # otherinfo['std'] = soldprice_std
-    # otherinfo['min'] = soldprice_min
-    # otherinfo['max'] = soldprice_max
+    otherinfo = df_train[['Address', 'lat','lng', 'Zestimate']].values
     df_train.drop(['Zestimate', 'Address', 'lat','lng','Soldprice'], inplace=True,
                   axis=1)
     data = df_train
@@ -321,23 +312,23 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
             data_LOT = label(train1, 0,  output_file)
             return data_LOT
 
-    if os.path.exists('..\Data\output_HOA.csv'):
-        data1 = pd.read_csv("..\Data\output_HOA.csv")
+    if os.path.exists('..\Data\output_HOA_Sold.csv'):
+        data1 = pd.read_csv("..\Data\output_HOA_Sold.csv")
         data_HOA = formhousedata(data1)
 
     else:
-        data1 = pd.read_csv("..\Data\Zillow_dataset_v1.0_HOA.csv")
+        data1 = pd.read_csv("..\Data\SoldData-HOA-V1.0.csv")
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data')
-        data_HOA = label(train1, 1,  '..\Data\output_HOA.csv')
+        data_HOA = label(train1, 1,  '..\Data\output_HOA_Sold.csv')
 
-    if os.path.exists('..\Data\output_LOT.csv'):
-        data2 = pd.read_csv("..\Data\output_LOT.csv")
+    if os.path.exists('..\Data\output_LOT_Sold.csv'):
+        data2 = pd.read_csv("..\Data\output_LOT_Sold.csv")
         data_LOT = formhousedata(data2)
 
     else:
-        data2 = pd.read_csv("..\Data\Zillow_dataset_v1.0_Lot.csv")
+        data2 = pd.read_csv("..\Data\SoldData-Lot-V1.0.csv")
         train2 = data2.fillna('No Data').replace('#NAME?', 'No Data')
-        data_LOT = label(train2,0, '..\Data\output_LOT.csv')
+        data_LOT = label(train2,0, '..\Data\output_LOT_Sold.csv')
 
     return data_HOA,data_LOT
 
