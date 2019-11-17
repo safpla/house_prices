@@ -87,6 +87,9 @@ class DNN_regressor(Basic_regressor):
         predictions = np.reshape(predictions, [-1])
         return predictions
 
+    def load_model(self, load_model_path):
+        self.model = tf.keras.models.load_model(load_model_path)
+
     def test(self, dataset, metrics=['MSE']):
         test_data = dataset.next_batch(dataset._num_examples)
         predictions = self.model.predict_on_batch(test_data['input'])

@@ -1,5 +1,6 @@
 import os, sys
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Ridge
 import numpy as np
 
 # import local
@@ -12,21 +13,95 @@ from models.ridge_regression_model import ridge_regression
 from utilities import evaluation
 from config.default_config import parse_args
 
+def fit_stacked_model(X_stacked, y_train, X_test, y_test):
+    model = Ridge(alpha=1.0)
+    model.fit(X_stacked, y_train)
+    return model
 
-def ensemble(preds, metrics, targets, methods=['Ave']):
-    for method in methods:
-        if method == 'Ave': # average
-            preds = np.array(preds)
-            ensemble_pred = np.sum(preds, axis=0) / np.shape(preds)[0]
-            print('Ave: ', evaluation(ensemble_pred, y_test))
-        elif method == 'WAve': # weighted average
-            weights = 1 / np.array(metrics)
-            weights = weights / np.sum(weights)
-            pred = np.matmul(weights, preds)
-            print('WAve: ', evaluation(pred, y_test))
+def make_stacked_data(models, features):
+    preds = []
+    for model in models:
+        preds.append(model.predict(features))
+    return np.array(preds).transpose()
+
+def stacking(models, data):
+    # making stacking dataset
+    X_train = data.stacking_train_features
+    y_train = data.stacking_train_targets
+    X_test = data.test_features
+    y_test = data.test_targets
+
+    X_stacked = make_stacked_data(models, X_train)
+
+    print('====Training stacking model=====')
+    stacked_model = fit_stacked_model(X_stacked, y_train, X_test, y_test)
+    preds = stacked_model.predict(X_stacked)
+    print('eval on training: ', evaluation(preds, y_train))
+
+    X_stacked_test = make_stacked_data(models, X_test)
+    preds = stacked_model.predict(X_stacked_test)
+    print('eval on testing: ', evaluation(preds, y_test))
+
+
+
+def weighted_average(models, data):
+    X_test = data.test_features
+    y_test = data.test_targets
+
+    preds = []
+    metrics = []
+    for model in models:
+        predictions = model.predict(X_test)
+        metric = evaluation(predictions, y_test)
+        preds.append(predictions)
+        metrics.append(metric[0])
+        print(model.exp_name, ': ', metric)
+
+    weights = 1 / np.array(metrics)
+    weights = weights / np.sum(weights)
+    wave_pred = np.matmul(weights, preds)
+    print('WAve: ', evaluation(wave_pred, y_test))
+
+def train_models(data):
+    config = parse_args()
+
+    X_test = data.test_features
+    y_test = data.test_targets
+    X_train = data.train_features_all
+    y_train = data.train_targets_all
+    config.dim_features = np.shape(X_train)[1]
+    models = []
+
+    for k in range(8):
+        print('Training dnn_CV{}'.format(k))
+        dnn_model = DNN_regressor(config=config, exp_name='dnn_cv{}'.format(k))
+
+        if config.dnn_load_models:
+            load_model_path = os.path.join(root_path, 'Models', 'dnn_cv{}'.format(k))
+            dnn_model.load_model(load_model_path)
+        else:
+            dnn_model.train(data.train_features[k],
+                            data.train_targets[k],
+                            data.valid_features[k],
+                            data.valid_targets[k])
+
+        models.append(dnn_model)
+
+    print('Training random forest')
+    rfr_model = Randomforest(exp_name='random_forest')
+    columns = data.data.columns
+    rfr_model.train(X_train, y_train, columns)
+    models.append(rfr_model)
+
+    print('Training ridge regression')
+    rr_model = ridge_regression(exp_name='ridge_regression')
+    rr_model.train(X_train, y_train)
+    models.append(rr_model)
+
+    return models
+
 
 if __name__ == '__main__':
-    config = parse_args()
     data_file_HOA = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_HOA.csv')
     data_file_LOT = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_Lot.csv')
     #data_HOA = pre_data(data_file_HOA, data_type='HOA', rebuild=True)
@@ -34,58 +109,6 @@ if __name__ == '__main__':
 
     data_HOA = pre_data(data_file_HOA, data_type='HOA')
     #data_LOT = pre_data(data_file_LOT, data_type='LOT')
-
-    X_test = data_HOA.test_features
-    y_test = data_HOA.test_targets
-    X_train = data_HOA.train_features_all
-    y_train = data_HOA.train_targets_all
-    config.dim_features = np.shape(X_test)[1]
-    preds = []
-    metrics = []
-
-    for k in range(9):
-        dnn_model = DNN_regressor(config=config, exp_name='dnn_cv{}'.format(k))
-
-        load_model_path = None
-        #dnn_model.train(data_HOA.train_features[k],
-        #                data_HOA.train_targets[k],
-        #                data_HOA.valid_features[k],
-        #                data_HOA.valid_targets[k])
-
-        load_model_path = os.path.join(root_path, 'Models', 'dnn_cv{}'.format(k))
-        dnn_predictions = dnn_model.predict(X_test, load_model_path)
-
-        dnn_metrics = evaluation(dnn_predictions, y_test)
-        preds.append(dnn_predictions)
-        metrics.append(dnn_metrics[0])
-
-        print('DNN{}: '.format(k), dnn_metrics)
-#    dnn_model = DNN_regressor(config=config)
-#    load_model_path = os.path.join(root_path, 'Models', 'new_exp')
-#    dnn_predictions = dnn_model.predict(X_test, load_model_path)
-#    dnn_metrics = evaluation(dnn_predictions, y_test)
-#    print('DNN: ', dnn_metrics)
-#    #dnn_model.evaluation(data_HOA)
-#
-    rfr_model = Randomforest()
-    columns = data_HOA.data.columns
-    rfr_model.train(X_train, y_train, columns)
-    rfr_predictions = rfr_model.predict(X_test)
-    rfr_metrics = evaluation(rfr_predictions, y_test)
-    preds.append(rfr_predictions)
-    metrics.append(rfr_metrics[0])
-    print('Random Forest: ', rfr_metrics)
-#    #rfr_model.evaluation(data_HOA)
-#
-    rr_model = ridge_regression()
-    rr_model.train(X_train, y_train)
-    rr_predictions = rr_model.predict(X_test, y_test)
-    rr_metrics = evaluation(rr_predictions, y_test)
-    preds.append(rr_predictions)
-    metrics.append(rr_metrics[0])
-    print('Ridge Regression: ', rr_metrics)
-
-#    preds = [dnn_predictions, rfr_predictions, rr_predictions]
-#    metrics = [dnn_metrics[0], rfr_metrics[0], rr_metrics[0]]
-    predictions = ensemble(preds, metrics, y_test,
-                           methods=['WAve'])
+    models = train_models(data_HOA)
+    weighted_average(models, data_HOA)
+    #stacking(models, data_HOA)
