@@ -90,6 +90,7 @@ class Dataset(object):
         np.random.shuffle(self._index)
 
         #normalization
+<<<<<<< HEAD
 def range(data):
     min = data.min()
     max = data.max()
@@ -227,6 +228,9 @@ def preprocessing(input_file):
     data = label(df_train)
 
     raise NotImplementedError
+=======
+
+>>>>>>> origin/master
 
 def evaluation(predictions, targets, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
     outputs = []

@@ -1,28 +1,32 @@
 
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split,cross_val_score, cross_val_predict,GridSearchCV
-from basic_regressor import Basic_regressor
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
+import os, sys
+root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, root_path)
 import pre_data
+from models.basic_regressor import Basic_regressor
+
 
 class grid():
-    
+
     def __init__(self,model):
         self.model=model
-        
-    #Find parameters       
+
+    #Find parameters
     def grid_get(self,X,y,param_grid):
         grid_search = GridSearchCV(self.model,param_grid,cv=9, scoring="neg_mean_squared_error")
         grid_search.fit(X,y)
-        print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
+        #print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
         grid_search.cv_results_['mean_test_score'] = np.sqrt(-grid_search.cv_results_['mean_test_score'])
-        print(pd.DataFrame(grid_search.cv_results_)[['params','mean_test_score','std_test_score']])
+        #print(pd.DataFrame(grid_search.cv_results_)[['params','mean_test_score','std_test_score']])
         return grid_search.best_params_
-    
+
 class performance():
-    
+
     #Calculate MeanAbsoluteError,MeanSquaredError,MedianAbsolutePercentageError and MdAPEin5PercentCounts
     def evaluation(predictions, response, metrics=['MAE', 'MSE', 'MdAPE', '5pct']):
         outputs = []
@@ -50,27 +54,26 @@ class ridge_regression(Basic_regressor):
     def __init__(self, config=None, exp_name='new_exp',ridge = None):
         self.config = config
         self.exp_name = exp_name
-        self.ridge = Ridge() 
-        
+        self.ridge = Ridge()
 
-    #train       
+
+    #train
     def train(self,features,response):
         alphas = np.logspace(-3,2,50)
         best_params = grid(Ridge()).grid_get(features,response,{'alpha': alphas,'max_iter':[10000]})
         self.ridge = Ridge(alpha=best_params['alpha'])
         self.ridge.fit(features,response)
 
-    #predict        
+    #predict
     def predict(self,features,response):
         predictions = self.ridge.predict(features)
-        print("predictions",predictions)
+        #print("predictions",predictions)
         predictions.reshape(-1,1)
         response.reshape(-1,1)
         perf = performance.evaluation(predictions,response)
-        print("MAE, MSE, MdAPE, 5pct",perf)
+        #print("MAE, MSE, MdAPE, 5pct",perf)
         return(predictions)
-   
-        
+
 if __name__ == "__main__":
     data_HOA,data_LOT = pre_data.pre_data()
     data = train_test_split(data_HOA.data, data_HOA.target,
@@ -79,4 +82,3 @@ if __name__ == "__main__":
     ridge_model = ridge_regression()
     ridge_model.train(X_train,y_train)
     ridge_model.predict(X_test,y_test)
-
