@@ -21,7 +21,6 @@ class DNN_regressor(Basic_regressor):
                 tf.keras.layers.Dense(128, activation='relu',
                                       input_shape=(self.config.dim_features,)),
                 tf.keras.layers.Dense(256, activation='relu'),
-                tf.keras.layers.Dense(256, activation='relu'),
                 tf.keras.layers.Dense(64, activation='relu'),
                 tf.keras.layers.Dense(16, activation='relu'),
                 tf.keras.layers.Dense(1)
@@ -45,10 +44,10 @@ class DNN_regressor(Basic_regressor):
         lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
             initial_learning_rate=config.dnn_lr,
             decay_steps=1000,
-            decay_rate=0.95,
+            decay_rate=0.90,
             staircase=True)
-        optimizer = tf.keras.optimizers.Adadelta(learning_rate=lr_schedule)
-        #optimizer = tf.keras.optimizers.Adam(learning_rate=config.dnn_lr)
+        #optimizer = tf.keras.optimizers.Adadelta(learning_rate=lr_schedule)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=config.dnn_lr)
         best_valid_metric = 1e10
         no_progress_count = 0
         while not stop_flag:
@@ -70,7 +69,7 @@ class DNN_regressor(Basic_regressor):
                 else:
                     no_progress_count = 0
                     best_valid_metric = valid_metric
-                if no_progress_count > 20:
+                if no_progress_count > 10:
                     stop_flag = True
 
             if iters > config.max_iterations:

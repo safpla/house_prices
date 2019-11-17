@@ -31,7 +31,7 @@ class Randomforest(Basic_regressor):
             oob_score=True,
             random_state=10)
         self.rfr.fit(features,response)
-        print("oob_score", self.rfr.oob_score_)
+        #print("oob_score", self.rfr.oob_score_)
 
         # Perform Grid-Search
         param_test1 = {'n_estimators': (10, 50, 100, 1000)}
@@ -76,11 +76,11 @@ class Randomforest(Basic_regressor):
         self.rfr.fit(features,response)
 
         # see the importance of features
-        print(columns)
+        #print(columns)
         importances = self.rfr.feature_importances_
         indices = np.argsort(importances)[::-1]
-        for f in range(features.shape[1]):
-            print(str(f + 1), columns[indices[f]],importances[indices[f]])
+        #for f in range(features.shape[1]):
+        #    print(str(f + 1), columns[indices[f]],importances[indices[f]])
 
         data = importances
         labels = columns
@@ -89,7 +89,7 @@ class Randomforest(Basic_regressor):
         # plt.show()
 
 
-        print("oob_score", self.rfr.oob_score_)
+        #print("oob_score", self.rfr.oob_score_)
 
 
 

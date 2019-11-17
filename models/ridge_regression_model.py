@@ -20,9 +20,9 @@ class grid():
     def grid_get(self,X,y,param_grid):
         grid_search = GridSearchCV(self.model,param_grid,cv=9, scoring="neg_mean_squared_error")
         grid_search.fit(X,y)
-        print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
+        #print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
         grid_search.cv_results_['mean_test_score'] = np.sqrt(-grid_search.cv_results_['mean_test_score'])
-        print(pd.DataFrame(grid_search.cv_results_)[['params','mean_test_score','std_test_score']])
+        #print(pd.DataFrame(grid_search.cv_results_)[['params','mean_test_score','std_test_score']])
         return grid_search.best_params_
 
 class performance():
@@ -67,11 +67,11 @@ class ridge_regression(Basic_regressor):
     #predict
     def predict(self,features,response):
         predictions = self.ridge.predict(features)
-        print("predictions",predictions)
+        #print("predictions",predictions)
         predictions.reshape(-1,1)
         response.reshape(-1,1)
         perf = performance.evaluation(predictions,response)
-        print("MAE, MSE, MdAPE, 5pct",perf)
+        #print("MAE, MSE, MdAPE, 5pct",perf)
         return(predictions)
 
 if __name__ == "__main__":
