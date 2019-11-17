@@ -13,9 +13,6 @@ import numpy as np
 from utilities import evaluation
 import matplotlib.pyplot as plt
 
-import warnings
-warnings.filterwarnings("ignore")
-
 class Randomforest(Basic_regressor):
     def __init__(self, config=None, exp_name='new_exp',rfr = None):
         self.config = config
@@ -34,8 +31,7 @@ class Randomforest(Basic_regressor):
         # Perform Grid-Search
         param_test1 = {'n_estimators': (10, 50, 100, 1000)}
         gsc = GridSearchCV(
-            estimator=RandomForestRegressor(oob_score=True,
-                                            random_state=10),
+            estimator=RandomForestRegressor(),
             param_grid=param_test1,
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
@@ -45,23 +41,19 @@ class Randomforest(Basic_regressor):
 
         param_test2 = {'max_depth':range(3,14,2), 'min_samples_split':range(50,201,20)}
         gsc = GridSearchCV(
-            estimator=RandomForestRegressor(n_estimators=params["n_estimators"],oob_score=True,
-                                            random_state=10),
+            estimator=RandomForestRegressor(),
             param_grid=param_test2,
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )
         grid_result = gsc.fit(features, response)
+        print(grid_result.grid_scores_, grid_result.best_params_, grid_result.best_score_)
         params["max_depth"] = grid_result.best_params_["max_depth"]
         params["min_samples_split"] = grid_result.best_params_["max_depth"]
 
 
         param_test3 = { 'min_samples_leaf': range(10, 60, 10)}
         gsc = GridSearchCV(
-            estimator=RandomForestRegressor(max_depth=params["max_depth"],
-                                            min_samples_split=params["min_samples_split"],
-                                            n_estimators=params["n_estimators"],
-                                            oob_score=True,
-                                            random_state=10),
+            estimator=RandomForestRegressor(),
             param_grid=param_test3,
             cv=5, scoring='neg_mean_squared_error', verbose=0, n_jobs=-1
         )

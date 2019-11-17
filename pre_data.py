@@ -33,6 +33,8 @@ class Housedata():
                                                             random_state=0)
         self.test_features = X_test
         self.test_targets = y_test
+        self.train_features_all = X_train
+        self.train_targets_all = y_train
         self.train_features = []
         self.train_targets = []
         for i in np.arange(k):
@@ -40,24 +42,24 @@ class Housedata():
             self.train_targets.append([])
         self.valid_features = []
         self.valid_targets = []
-        cv_features = []
-        cv_targets = []
+        self.cv_features = []
+        self.cv_targets = []
         split_size = round(np.shape(y_train)[0] / k)
         for i in np.arange(k-1):
-            cv_features.append(X_train[split_size*i : split_size*(i+1), :])
-            cv_targets.append(y_train[split_size*i : split_size*(i+1)])
-        cv_features.append(X_train[split_size*(k-1) : , :])
-        cv_targets.append(y_train[split_size*(k-1) :])
+            self.cv_features.append(X_train[split_size*i : split_size*(i+1), :])
+            self.cv_targets.append(y_train[split_size*i : split_size*(i+1)])
+        self.cv_features.append(X_train[split_size*(k-1) : , :])
+        self.cv_targets.append(y_train[split_size*(k-1) :])
         for i in np.arange(k):
             self.train_features
         for i in np.arange(k):
             for j in np.arange(k):
                 if i == j:
-                    self.valid_features.append(cv_features[i])
-                    self.valid_targets.append(cv_targets[i])
+                    self.valid_features.append(self.cv_features[i])
+                    self.valid_targets.append(self.cv_targets[i])
                 else:
-                    self.train_features[j].append(cv_features[i])
-                    self.train_targets[j].append(cv_targets[i])
+                    self.train_features[j].append(self.cv_features[i])
+                    self.train_targets[j].append(self.cv_targets[i])
         for i in np.arange(k):
             self.train_features[i] = np.concatenate(self.train_features[i])
             self.train_targets[i] = np.concatenate(self.train_targets[i])
@@ -65,8 +67,9 @@ class Housedata():
 
 
 def Geocode(data):
-    zip_geo = pd.read_csv(
-            "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
+    #zip_geo = pd.read_csv(
+    #        "D:\\SUNZHIMIN\Grad life\\Grad School\\CS 6220 Big data sys and analysis\\Project\\zipcode-geolocation\\US Zip Codes from 2013 Government Data.csv")
+    zip_geo = pd.read_csv(os.path.join(root_path, 'Data/US Zip Codes from 2013 Government Data.csv'))
 
     zip_geo = DataFrame(zip_geo)
     data['lat'] = data['Address']
@@ -99,11 +102,19 @@ def cluster(data):
     return new_data
 
 #normalization
+# TODO(Haowen): try another normalization
+#def range(data):
+#    min = data.min()
+#    max = data.max()
+#    data = (data - min) / (max - min)
+#    return data
+
 def range(data):
-    min = data.min()
-    max = data.max()
-    data = (data - min) / (max - min)
+    data_mean = data.mean()
+    data_std = data.std()
+    data = (data - data_mean) / data_std
     return data
+
 
 def reverse(data,min,max):
     data = data * (max - min) + min
@@ -262,8 +273,10 @@ def label(df_train,type,outfile):
     print(df_train.info())
     onehotdata = df_train[['Type','Heating','Cooling']]
     df_train = df_train.join(pd.get_dummies(onehotdata))
+    print(df_train.columns)
 
-    to_drop = ['Type','Heating','Cooling','lat', 'lng','label']
+    # TODO(Haowen) drop price
+    to_drop = ['Type','Heating','Cooling','lat', 'lng','label', 'price']
     df_train.drop(to_drop, inplace=True, axis=1)
 
     #shuffle the data before saving to the file
@@ -280,13 +293,13 @@ def label(df_train,type,outfile):
 
     return dataset
 
-def pre_data(data_file=None, data_type=None):
+def pre_data(data_file=None, data_type=None, rebuild=False):
     if not data_file is None:
         output_file = '/'.join(data_file.split('/')[0:-1]) + '/output_{}.csv'.format(data_type)
-        if os.path.exists(output_file):
+        if os.path.exists(output_file) and not rebuild:
             data1 = pd.read_csv(output_file)
             target = data1['Zestimate'].values
-            otherinfo = data1['Address','geo'].values
+            otherinfo = data1[['Address','geo']].values
             data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
             data = data1
             data_ = Housedata(data, target,otherinfo)

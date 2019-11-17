@@ -1,6 +1,6 @@
 """ Basic model object """
 import os, sys
-root_path = os.path.dirname(os.path.realpath(__file__))
+root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0, root_path)
 from utilities import evaluation
 
@@ -41,4 +41,5 @@ class Basic_regressor():
             performance.append(evaluation(predictions, targets))
         print(performance)
 
-
+if __name__ == '__main__':
+    pass
