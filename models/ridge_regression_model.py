@@ -1,11 +1,15 @@
 
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split,cross_val_score, cross_val_predict,GridSearchCV
-from basic_regressor import Basic_regressor
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import pandas as pd
+import os, sys
+root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, root_path)
 import pre_data
+from models.basic_regressor import Basic_regressor
+
 
 class grid():
 
