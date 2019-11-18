@@ -26,6 +26,7 @@ class DNN_regressor(Basic_regressor):
                 tf.keras.layers.Dense(1)
             ])
         self.model = model
+        #model.summary()
 
     def train(self, train_features, train_targets, valid_features, valid_targets):
         # build up datasets

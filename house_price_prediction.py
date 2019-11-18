@@ -117,30 +117,35 @@ def train_models(data):
         rfr_model.train(X_train, y_train, columns)
     models.append(rfr_model)
 
-    print('Training ridge regression')
-    rr_model = ridge_regression(exp_name='ridge_regression')
-    if config.rr_load_models:
-        load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
-        rr_model.load_model(load_model_path)
-    else:
-        rr_model.train(X_train, y_train)
-    models.append(rr_model)
+    #print('Training ridge regression')
+    #rr_model = ridge_regression(exp_name='ridge_regression')
+    #if config.rr_load_models:
+    #    load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
+    #    rr_model.load_model(load_model_path)
+    #else:
+    #    rr_model.train(X_train, y_train)
+    #models.append(rr_model)
 
     return models
 
 
 if __name__ == '__main__':
-    data_file_HOA = os.path.join(root_path, 'Data/SoldData-HOA-V2.0.csv')
-    data_file_LOT = os.path.join(root_path, 'Data/SoldData-Lot-V2.0.csv')
-    data_file_HOA = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_HOA.csv')
-    #data = pre_data(data_file_HOA, data_type='HOA', rebuild=True)
-    #data = pre_data(data_file_LOT, data_type='LOT', rebuild=True)
+    config = parse_args()
+    if config.data_type == 'HOA':
+        data_file_HOA = os.path.join(root_path, 'Data/SoldData-HOA-V2.0.csv')
+        data_file_HOA = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_HOA.csv')
+        #data = pre_data(data_file_HOA, data_type='HOA', rebuild=True)
+        data = pre_data(data_file_HOA, data_type='HOA')
 
-    data = pre_data(data_file_HOA, data_type='HOA')
-    #data = pre_data(data_file_LOT, data_type='LOT')
+        models = train_models(data)
+        weighted_average(models, data, data_type='HOA')
+        stacking(models, data, data_type='HOA')
+    else:
+        data_file_LOT = os.path.join(root_path, 'Data/SoldData-Lot-V2.0.csv')
+        data_file_LOT = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_Lot.csv')
 
-    models = train_models(data)
-    weighted_average(models, data, data_type='HOA')
-    stacking(models, data, data_type='HOA')
-    #weighted_average(models, data, data_type='LOT')
-    #stacking(models, data, data_type='LOT')
+        #data = pre_data(data_file_LOT, data_type='LOT', rebuild=True)
+        #data = pre_data(data_file_LOT, data_type='LOT')
+        models = train_models(data)
+        #weighted_average(models, data, data_type='LOT')
+        #stacking(models, data, data_type='LOT')
