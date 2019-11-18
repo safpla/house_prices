@@ -100,12 +100,10 @@ def Geocode(data):
     print(data['lat'])
     return data
 
-def cluster(data):
+def cluster(data,cluter_num):
     new_data = Geocode(data)
     geolocation = np.c_[new_data['lat'], new_data['lng']]
-    print(geolocation)
-    kmeans = KMeans(n_clusters=5, random_state=0).fit(geolocation)
-    print(type(kmeans.labels_))
+    kmeans = KMeans(n_clusters=cluter_num, random_state=0).fit(geolocation)
     new_data['label'] = kmeans.labels_
     return new_data
 
@@ -117,7 +115,7 @@ def cluster(data):
 #    data = (data - min) / (max - min)
 #    return data
 
-def range(data):
+def normal(data):
     data_mean = data.mean()
     data_std = data.std()
     if data_std != 0:
@@ -152,6 +150,8 @@ def readjson(infile):
     print (s['mean'],s['std'],s['min'],s['max'])
 
 def label(df_train,type,outfile):
+    cluter_num = 15
+
     #df_train = df_train.fillna('No Data').replace('#NAME?', 'No Data')
     df_train = df_train.rename(columns={'Sold price': 'Soldprice'})
     df_train.replace('No Data','')
@@ -172,7 +172,7 @@ def label(df_train,type,outfile):
     soldprice_std = df_train['Soldprice'].std()
     soldprice_min = df_train['Soldprice'].min()
     soldprice_max = df_train['Soldprice'].max()
-    df_train['Soldprice'] = range(df_train['Soldprice'])
+    df_train['Soldprice'] = normal(df_train['Soldprice'])
 
     # drop outliers
     df_train.sort_values(by="Soldprice", ascending=False)
@@ -198,21 +198,21 @@ def label(df_train,type,outfile):
         savejson(soldprice_mean, soldprice_std, soldprice_min, soldprice_max, jsonoutfile)
 
     # renormalization
-    df_train['Soldprice'] = range(df_train['Soldprice'])
+    df_train['Soldprice'] = normal(df_train['Soldprice'])
 
     #bedrooms clear
     df_train['Bedrooms'] = df_train['Bedrooms'].replace('\D+', '', regex=True)
     df_train['Bedrooms'] = pd.to_numeric(df_train['Bedrooms'])
     mean_bd = df_train['Bedrooms'].mean()
     df_train['Bedrooms'] = df_train['Bedrooms'].fillna(mean_bd)
-    df_train['Bedrooms'] = range(df_train['Bedrooms'])
+    df_train['Bedrooms'] = normal(df_train['Bedrooms'])
 
     #bathrooms clear
     df_train['Bathrooms'] = df_train['Bathrooms'].replace('\D+', '', regex=True)
     df_train['Bathrooms'] = pd.to_numeric(df_train['Bathrooms'])
     mean_bd = df_train['Bathrooms'].mean()
     df_train['Bathrooms'] = df_train['Bathrooms'].fillna(mean_bd)
-    df_train['Bathrooms'] = range(df_train['Bathrooms'])
+    df_train['Bathrooms'] = normal(df_train['Bathrooms'])
 
     #Area  clear
     df_train['Area'] = df_train['Area'].replace('\D+', '', regex=True)
@@ -220,7 +220,7 @@ def label(df_train,type,outfile):
     df_train['Area'] = pd.to_numeric(df_train['Area'])
     mean_bd = df_train['Area'].mean()
     df_train['Area'] = df_train['Area'].fillna(mean_bd)
-    df_train['Area'] = range(df_train['Area'])
+    df_train['Area'] = normal(df_train['Area'])
 
 
     #Year built clear
@@ -228,7 +228,7 @@ def label(df_train,type,outfile):
     df_train['Year built'] = pd.to_numeric(df_train['Year built'])  # transfer the data type
     mean_bd = df_train['Year built'].mean()
     df_train['Year built'] = df_train['Year built'].fillna(mean_bd)
-    df_train['Year built'] = range(df_train['Year built'])
+    df_train['Year built'] = normal(df_train['Year built'])
 
     #Last remodel year
     df_train = df_train.rename(columns={'Last remodel year':'LRY'})
@@ -236,7 +236,7 @@ def label(df_train,type,outfile):
     df_train['LRY'] = pd.to_numeric(df_train['LRY'])  # transfer the data type
     mean_bd = df_train['LRY'].mean()
     df_train['LRY'] = df_train['LRY'].fillna(mean_bd)
-    df_train['LRY'] = range(df_train['LRY'])
+    df_train['LRY'] = normal(df_train['LRY'])
 
     # parking - the number of parking spaces clear
     df_train['Parking'] = df_train['Parking'].replace('^Attached Garage', '3', regex=True)
@@ -245,7 +245,7 @@ def label(df_train,type,outfile):
     df_train['Parking'] = pd.to_numeric(df_train['Parking'])
     mean_bd = df_train['Parking'].mean()
     df_train['Parking'] = df_train['Parking'].fillna(mean_bd)
-    df_train['Parking'] = range(df_train['Parking'])
+    df_train['Parking'] = normal(df_train['Parking'])
 
 
     if type== 1:
@@ -256,7 +256,7 @@ def label(df_train,type,outfile):
         df_train['Lot'][df_train['Lot'] > 1000000] = None
         mean_bd = df_train['Lot'].mean()
         df_train['Lot'] = df_train['Lot'].fillna(mean_bd)
-        df_train['Lot'] = range(df_train['Lot'])
+        df_train['Lot'] = normal(df_train['Lot'])
 
     if type == 0:
         #area-Lot
@@ -275,23 +275,34 @@ def label(df_train,type,outfile):
         df_train['Lot'] = pd.to_numeric(df_train['Lot'])
         mean_bd = df_train['Lot'].mean()
         df_train['Lot'] = df_train['Lot'].fillna(mean_bd)
-        df_train['Lot'] = range(df_train['Lot'])
+        df_train['Lot'] = normal(df_train['Lot'])
 
     # zestimate
     df_train['Zestimate'] = df_train['Zestimate'].replace('[\D]+', '', regex=True)
     df_train['Zestimate'] = pd.to_numeric(df_train['Zestimate'])  # transfer the data type
     df_train = df_train.dropna(subset=["Zestimate"])
-    df_train['Zestimate'] = range(df_train['Zestimate'])
+    df_train['Zestimate'] = normal(df_train['Zestimate'])
 
     # #Address
     df_train['Address'] = df_train['Address'].str.extract(r'.*(\d{5}(\-\d{4})?)$')  # extract zip code from address
     df_train['Address'] = pd.to_numeric(df_train['Address'])
     df_train['Address'] = df_train['Address'].replace(np.nan, 'No Data', regex=True)
-    df_train = cluster(df_train)
-    print(df_train['lat'])
+    df_train = cluster(df_train,cluter_num)
 
-    #df_train['label'] = pd.to_numeric(df_train['label'], downcast='integer')
-    df_train = df_train.join(pd.get_dummies(df_train['label'],prefix="label"))
+    #average house price
+    df_train['Avgprice'] = df_train['label']
+    df_train['label'].astype(str)
+    df_train['Avgprice'] = pd.to_numeric(df_train['Avgprice'],downcast="float")
+    for i in range(cluter_num):
+        labeldata = df_train[df_train['label']==i]
+        Avgprice = labeldata['Soldprice'].mean()
+        rows = df_train[df_train['label'] == i].index
+        for j in rows:
+            df_train['Avgprice'][j] = float(Avgprice)
+
+
+
+    #df_train = df_train.join(pd.get_dummies(df_train['label'],prefix="label")) #one-hot label
     onehotdata = df_train[['Type','Heating','Cooling']]
     df_train = df_train.join(pd.get_dummies(onehotdata))
 
@@ -369,7 +380,7 @@ if __name__ == "__main__":
         data_LOT = label(train2, 0, '.\Data\output_LOT_Sold.csv')
 
 
-    # print("data_HOA",data_HOA.data.info(), data_HOA.target)
-    # print("data_LOT", data_LOT.data.info(), data_LOT.target)
+    print("data_HOA",data_HOA.data.info(), data_HOA.target)
+    print("data_LOT", data_LOT.data.info(), data_LOT.target)
     readjson(".\Data\para_HOA.json")
     readjson(".\Data\para_LOT.json")
