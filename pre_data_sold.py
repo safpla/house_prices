@@ -307,7 +307,11 @@ def label(df_train,type,outfile):
     df_train = df_train.join(pd.get_dummies(onehotdata))
 
     # TODO(Haowen) drop price
-    to_drop = ['Unnamed: 18', 'Type','Heating','Cooling','label','Sunscore', 'Title_link', 'Sold date','Zestimate range','Last 30 day change']
+    if type==0:
+        to_drop = ['Unnamed: 18', 'Type','Heating','Cooling','label','Sunscore', 'Title_link', 'Sold date','Zestimate range','Last 30 day change']
+    else:
+        to_drop = ['Type','Heating','Cooling','label','Sunscore', 'Title_link', 'Sold date','Zestimate range','Last 30 day change']
+
     df_train.drop(to_drop, inplace=True, axis=1)
 
     #shuffle the data before saving to the file

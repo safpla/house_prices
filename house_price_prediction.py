@@ -37,7 +37,7 @@ def stacking(models, data):
     print('====Training stacking model=====')
     stacked_model = fit_stacked_model(X_stacked, y_train, X_test, y_test)
     preds = stacked_model.predict(X_stacked)
-    json_file = os.path.join(root_path, 'Data/para_HOA.json')
+    json_file = os.path.join(root_path, 'Data/para_LOT.json')
     paras = json.load(open(json_file, 'r'))
     target_min = paras['min']
     target_max = paras['max']
@@ -56,7 +56,7 @@ def stacking(models, data):
 def weighted_average(models, data):
     X_test = data.test_features
     y_test = data.test_targets
-    json_file = os.path.join(root_path, 'Data/para_HOA.json')
+    json_file = os.path.join(root_path, 'Data/para_LOT.json')
     paras = json.load(open(json_file, 'r'))
     target_min = paras['min']
     target_max = paras['max']
@@ -131,6 +131,7 @@ def train_models(data):
 if __name__ == '__main__':
     data_file_HOA = os.path.join(root_path, 'Data/SoldData-HOA-V2.0.csv')
     data_file_LOT = os.path.join(root_path, 'Data/SoldData-Lot-V2.0.csv')
+    print(data_file_LOT)
     data = pre_data(data_file_HOA, data_type='HOA', rebuild=True)
     #data = pre_data(data_file_LOT, data_type='LOT', rebuild=True)
 
