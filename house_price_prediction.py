@@ -2,11 +2,12 @@ import os, sys
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import Ridge
 import numpy as np
+import json
 
 # import local
 root_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, root_path)
-from pre_data import pre_data
+from pre_data_sold import pre_data
 from models.dnn_regressor import DNN_regressor
 from models.random_forest_model import Randomforest
 from models.ridge_regression_model import ridge_regression
@@ -36,26 +37,39 @@ def stacking(models, data):
     print('====Training stacking model=====')
     stacked_model = fit_stacked_model(X_stacked, y_train, X_test, y_test)
     preds = stacked_model.predict(X_stacked)
-    print('eval on training: ', evaluation(preds, y_train, data.target_mean,
-                                           data.target_std))
+    json_file = os.path.join(root_path, 'Data/para_HOA.json')
+    paras = json.load(open(json_file, 'r'))
+    target_min = paras['min']
+    target_max = paras['max']
+    target_mean = paras['mean']
+    target_std = paras['std']
+    print('eval on training: ', evaluation(preds, y_train,
+                                           target_mean,
+                                           target_std))
 
     X_stacked_test = make_stacked_data(models, X_test)
     preds = stacked_model.predict(X_stacked_test)
     print('eval on testing: ', evaluation(preds, y_test,
-                                          data.target_mean,
-                                          data.target_std))
+                                          target_mean,
+                                          target_std))
 
 def weighted_average(models, data):
     X_test = data.test_features
     y_test = data.test_targets
+    json_file = os.path.join(root_path, 'Data/para_HOA.json')
+    paras = json.load(open(json_file, 'r'))
+    target_min = paras['min']
+    target_max = paras['max']
+    target_mean = paras['mean']
+    target_std = paras['std']
 
     preds = []
     metrics = []
     for model in models:
         predictions = model.predict(X_test)
         metric = evaluation(predictions, y_test,
-                            data.target_mean,
-                            data.target_std)
+                            target_mean,
+                            target_std)
         preds.append(predictions)
         metrics.append(metric[0])
         print(model.exp_name, ': ', metric)
@@ -64,8 +78,8 @@ def weighted_average(models, data):
     weights = weights / np.sum(weights)
     wave_pred = np.matmul(weights, preds)
     print('WAve: ', evaluation(wave_pred, y_test,
-                               data.target_mean,
-                               data.target_std))
+                               target_mean,
+                               target_std))
 
 def train_models(data):
     config = parse_args()
@@ -77,20 +91,20 @@ def train_models(data):
     config.dim_features = np.shape(X_train)[1]
     models = []
 
-    for k in range(8):
-        print('Training dnn_CV{}'.format(k))
-        dnn_model = DNN_regressor(config=config, exp_name='dnn_cv{}'.format(k))
+    #for k in range(1):
+    #    print('Training dnn_CV{}'.format(k))
+    #    dnn_model = DNN_regressor(config=config, exp_name='dnn_cv{}'.format(k))
 
-        if config.dnn_load_models:
-            load_model_path = os.path.join(root_path, 'Models', 'dnn_cv{}'.format(k))
-            dnn_model.load_model(load_model_path)
-        else:
-            dnn_model.train(data.train_features[k],
-                            data.train_targets[k],
-                            data.valid_features[k],
-                            data.valid_targets[k])
+    #    if config.dnn_load_models:
+    #        load_model_path = os.path.join(root_path, 'Models', 'dnn_cv{}'.format(k))
+    #        dnn_model.load_model(load_model_path)
+    #    else:
+    #        dnn_model.train(data.train_features[k],
+    #                        data.train_targets[k],
+    #                        data.valid_features[k],
+    #                        data.valid_targets[k])
 
-        models.append(dnn_model)
+    #    models.append(dnn_model)
 
     print('Training random forest')
     rfr_model = Randomforest(exp_name='random_forest')
@@ -102,25 +116,25 @@ def train_models(data):
         rfr_model.train(X_train, y_train, columns)
     models.append(rfr_model)
 
-    print('Training ridge regression')
-    rr_model = ridge_regression(exp_name='ridge_regression')
-    if config.rr_load_models:
-        load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
-        rr_model.load_model(load_model_path)
-    else:
-        rr_model.train(X_train, y_train)
-    models.append(rr_model)
+    #print('Training ridge regression')
+    #rr_model = ridge_regression(exp_name='ridge_regression')
+    #if config.rr_load_models:
+    #    load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
+    #    rr_model.load_model(load_model_path)
+    #else:
+    #    rr_model.train(X_train, y_train)
+    #models.append(rr_model)
 
     return models
 
 
 if __name__ == '__main__':
-    data_file_HOA = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_HOA.csv')
-    data_file_LOT = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_Lot.csv')
-    #data_HOA = pre_data(data_file_HOA, data_type='HOA', rebuild=True)
+    data_file_HOA = os.path.join(root_path, 'Data/SoldData-HOA-V1.0.csv')
+    data_file_LOT = os.path.join(root_path, 'Data/SoldData-Lot-V1.0.csv')
+    data_HOA = pre_data(data_file_HOA, data_type='HOA', rebuild=True)
     #data_LOT = pre_data(data_file_LOT, data_type='LOT', rebuild=True)
 
-    data_HOA = pre_data(data_file_HOA, data_type='HOA')
+    #data_HOA = pre_data(data_file_HOA, data_type='HOA')
     #data_LOT = pre_data(data_file_LOT, data_type='LOT')
     models = train_models(data_HOA)
     weighted_average(models, data_HOA)

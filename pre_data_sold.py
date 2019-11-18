@@ -24,16 +24,21 @@ output: dataset used for training and testing
 
 class Housedata():
     def __init__(self,data=None,target=None,otherinfo=None):
-        k = 9
+        k = 8
         self.data = data
         self.target = target
         self.otherinfo = otherinfo
         X_train, X_test, y_train, y_test = train_test_split(self.data.values,
                                                             self.target,
-                                                            test_size=0.1,
+                                                            test_size=0.2,
                                                             random_state=0)
-        self.test_features = X_test
-        self.test_targets = y_test
+        X_test1, X_test2, y_test1, y_test2 = train_test_split(X_test, y_test,
+                                                              test_size=0.5,
+                                                              random_state=0)
+        self.test_features = X_test1
+        self.test_targets = y_test1
+        self.stacking_train_features = X_test2
+        self.stacking_train_targets = y_test2
         self.train_features_all = X_train
         self.train_targets_all = y_train
         self.train_features = []
@@ -64,8 +69,6 @@ class Housedata():
         for i in np.arange(k):
             self.train_features[i] = np.concatenate(self.train_features[i])
             self.train_targets[i] = np.concatenate(self.train_targets[i])
-
-
 
 def Geocode(data):
     #zip_geo = pd.read_csv(
@@ -179,10 +182,16 @@ def label(df_train,type,outfile):
     soldprice_min = df_train['Soldprice'].min()
     soldprice_max = df_train['Soldprice'].max()
     if type == 1:
-        jsonoutfile = '.\Data\para_HOA.json'
+        if os.name == 'posix':
+            jsonoutfile = os.path.join(root_path, 'Data/para_HOA.json')
+        else:
+            jsonoutfile = '.\Data\para_HOA.json'
         savejson(soldprice_mean, soldprice_std, soldprice_min, soldprice_max, jsonoutfile)
     else:
-        jsonoutfile = '.\Data\para_LOT.json'
+        if os.name == 'posix':
+            jsonoutfile = os.path.join(root_path, 'Data/para_LOT.json')
+        else:
+            jsonoutfile = '.\Data\para_LOT.json'
         savejson(soldprice_mean, soldprice_std, soldprice_min, soldprice_max, jsonoutfile)
 
     # renormalization
@@ -298,7 +307,7 @@ def label(df_train,type,outfile):
 
 def pre_data(data_file=None, data_type=None, rebuild=False):
     if not data_file is None:
-        output_file = '/'.join(data_file.split('/')[0:-1]) + '/output_{}.csv'.format(data_type)
+        output_file = '/'.join(data_file.split('/')[0:-1]) + '/output_{}_Sold.csv'.format(data_type)
         if os.path.exists(output_file) and not rebuild:
             data1 = pd.read_csv(output_file)
             data_ = formhousedata(data1)

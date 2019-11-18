@@ -94,7 +94,7 @@ class DNN_regressor(Basic_regressor):
         test_data = dataset.next_batch(dataset._num_examples)
         predictions = self.model.predict_on_batch(test_data['input'])
         predictions = np.reshape(predictions, [-1])
-        return evaluation(predictions, test_data['target'], metrics=metrics)
+        return evaluation(predictions, test_data['target'], 0, 1, metrics=metrics)
 
 
 
