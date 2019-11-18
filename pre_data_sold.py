@@ -84,8 +84,12 @@ def Geocode(data):
         if type(item['Address']) == type(1) and item['Address'] is not np.nan:
             zipcode = item['Address']
             index = (zip_geo['ZIP'][zip_geo['ZIP'] == int(zipcode)].index)
-            lat = zip_geo.at[int(index[0]),'LAT']
-            lng = zip_geo.at[int(index[0]),'LNG']
+            if len(index) == 0:
+                lat = 0
+                lng = 0
+            else:
+                lat = zip_geo.at[int(index[0]),'LAT']
+                lng = zip_geo.at[int(index[0]),'LNG']
 
             data['lat'][i] = float(lat)
             data['lng'][i] = float(lng)
@@ -146,7 +150,6 @@ def readjson(infile):
     file = open(infile,'r',encoding='utf-8')
     s = json.load(file)
     print (s['mean'],s['std'],s['min'],s['max'])
-
 
 def label(df_train,type,outfile):
     #df_train = df_train.fillna('No Data').replace('#NAME?', 'No Data')
@@ -264,7 +267,7 @@ def label(df_train,type,outfile):
         df_train[rows_with_sqft]
         #将sqft的数据转换为acres数据
         for i, sqft_row in df_train[rows_with_sqft].iterrows():
-            area = str(float(sqft_row['Lot'][:-5])/43560)
+            area = '%.7f'%(float(sqft_row['Lot'][:-5])/43560)
             df_train['Lot'][i] = '{} acres'.format(area)
         #去除所有的非数字字符
         df_train['Lot'] = df_train['Lot'].replace("[\ssqft]+", '', regex=True)
@@ -293,7 +296,7 @@ def label(df_train,type,outfile):
     df_train = df_train.join(pd.get_dummies(onehotdata))
 
     # TODO(Haowen) drop price
-    to_drop = ['Type','Heating','Cooling','label','Sunscore', 'Title_link', 'Sold date','Zestimate range','Last 30 day change']
+    to_drop = ['Unnamed: 18', 'Type','Heating','Cooling','label','Sunscore', 'Title_link', 'Sold date','Zestimate range','Last 30 day change']
     df_train.drop(to_drop, inplace=True, axis=1)
 
     #shuffle the data before saving to the file

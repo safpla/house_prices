@@ -20,6 +20,8 @@ class grid():
     #Find parameters
     def grid_get(self,X,y,param_grid):
         grid_search = GridSearchCV(self.model,param_grid,cv=9, scoring="neg_mean_squared_error")
+        print(np.shape(X))
+        print(np.shape(y))
         grid_search.fit(X,y)
         #print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
         grid_search.cv_results_['mean_test_score'] = np.sqrt(-grid_search.cv_results_['mean_test_score'])
