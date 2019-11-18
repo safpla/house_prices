@@ -84,7 +84,6 @@ def Geocode(data):
     zip_geo = DataFrame(zip_geo)
     data['lat'] = data['Address']
     data['lng'] = data['Address']
-    data['geo'] = data['Address']
     for i, item in data.iterrows():
         if type(item['Address']) == type(1.0) and item['Address'] is not np.nan:
             zipcode = item['Address']
@@ -94,20 +93,18 @@ def Geocode(data):
 
             data['lat'][i] = lat
             data['lng'][i] = lng
-            data['geo'][i] = lat,lng
 
     data['lat'] = data['lat'].replace( 'No Data', '0', regex=True)
     data['lng'] = data['lng'].replace('No Data', '0', regex=True)
 
     return data
 
-def cluster(data):
+def cluster(data,cluster_num):
     new_data = Geocode(data)
     geolocation = np.c_[new_data['lat'], new_data['lng']]
     print(geolocation)
-    kmeans = KMeans(n_clusters=5, random_state=0).fit(geolocation)
+    kmeans = KMeans(n_clusters=cluster_num, random_state=0).fit(geolocation)
     print(type(kmeans.labels_))
-    print((new_data['geo']))
     new_data['label'] = kmeans.labels_
     return new_data
 
@@ -129,7 +126,7 @@ def savejson(mean,std,min,max,outfile):
 #    data = data * (max - min) + min
 #    return data
 
-def range(data):
+def normal(data):
     data_mean = data.mean()
     data_std = data.std()
     data = (data - data_mean) / data_std
@@ -140,7 +137,19 @@ def reverse(data, mean, std):
     return data
 
 
+def formhousedata(df_train):
+    target = df_train['Zestimate'].values
+    otherinfo = df_train[['Address', 'lat','lng']].values
+    df_train.drop(['Zestimate', 'Address', 'lat','lng'], inplace=True,
+                  axis=1)
+    data = df_train
+    dataset = Housedata(data, target, otherinfo)
+    return dataset
+
+
+
 def label(df_train,type,outfile):
+    cluter_num = 15
     # zestimate
     df_train['Zestimate'] = df_train['Zestimate'].replace('[\D]+', '', regex=True)
     df_train['Zestimate'] = pd.to_numeric(df_train['Zestimate'])  # transfer the data type
@@ -149,7 +158,7 @@ def label(df_train,type,outfile):
     zestimate_min = df_train['Zestimate'].min()
     zestimate_mean = df_train['Zestimate'].mean()
     zestimate_std = df_train['Zestimate'].std()
-    df_train['Zestimate'] = range(df_train['Zestimate'])
+    df_train['Zestimate'] = normal(df_train['Zestimate'])
     # drop outliers
     df_train.sort_values(by="Zestimate", ascending=False)
     df_train = df_train[df_train['Zestimate'] <= 0.2]
@@ -171,7 +180,7 @@ def label(df_train,type,outfile):
             jsonoutfile = '.\Data\para_LOT.json'
         savejson(target_mean, target_std, target_min, target_max, jsonoutfile)
     #renormalization
-    df_train['Zestimate'] = range(df_train['Zestimate'])
+    df_train['Zestimate'] = normal(df_train['Zestimate'])
     print(np.shape(df_train))
 
     #price
@@ -179,9 +188,7 @@ def label(df_train,type,outfile):
     df_train['price'] = pd.to_numeric(df_train['price']) # transfer the data type
 
     df_train['price'].hist()
-    df_train['price'] = range(df_train['price'])
-
-
+    df_train['price'] = normal(df_train['price'])
 
     #bedrooms
     df_train['Bedrooms'] = df_train['Bedrooms'].replace('[bds|Studio]+', '', regex=True)
@@ -190,14 +197,14 @@ def label(df_train,type,outfile):
     df_train['Bedrooms'] = pd.to_numeric(df_train['Bedrooms'])
     mean_bd = df_train['Bedrooms'].mean()
     df_train['Bedrooms'] = df_train['Bedrooms'].fillna(mean_bd)
-    df_train['Bedrooms'] = range(df_train['Bedrooms'])
+    df_train['Bedrooms'] = normal(df_train['Bedrooms'])
 
     #bathrooms
     df_train['Bathrooms'] = df_train['Bathrooms'].replace('\D+', '', regex=True)
     df_train['Bathrooms'] = pd.to_numeric(df_train['Bathrooms'])
     mean_bd = df_train['Bathrooms'].mean()
     df_train['Bathrooms'] = df_train['Bathrooms'].fillna(mean_bd)
-    df_train['Bathrooms'] = range(df_train['Bathrooms'])
+    df_train['Bathrooms'] = normal(df_train['Bathrooms'])
 
     #Area
     df_train['Area'] = df_train['Area'].replace('\D+', '', regex=True)
@@ -205,7 +212,7 @@ def label(df_train,type,outfile):
     df_train['Area'] = pd.to_numeric(df_train['Area'])
     mean_bd = df_train['Area'].mean()
     df_train['Area'] = df_train['Area'].fillna(mean_bd)
-    df_train['Area'] = range(df_train['Area'])
+    df_train['Area'] = normal(df_train['Area'])
 
 
 
@@ -215,7 +222,7 @@ def label(df_train,type,outfile):
     df_train['Year Built'] = pd.to_numeric(df_train['Year Built'])  # transfer the data type
     mean_bd = df_train['Year Built'].mean()
     df_train['Year Built'] = df_train['Year Built'].fillna(mean_bd)
-    df_train['Year Built'] = range(df_train['Year Built'])
+    df_train['Year Built'] = normal(df_train['Year Built'])
 
     # parking - the number of parking spaces
     df_train['Parking'] = df_train['Parking'].replace('[\D]+', '', regex=True)
@@ -223,7 +230,7 @@ def label(df_train,type,outfile):
     df_train['Parking'] = pd.to_numeric(df_train['Parking'])
     mean_bd = df_train['Parking'].mean()
     df_train['Parking'] = df_train['Parking'].fillna(mean_bd)
-    df_train['Parking'] = range(df_train['Parking'])
+    df_train['Parking'] = normal(df_train['Parking'])
 
     if type== 1:
         #money per month
@@ -234,7 +241,7 @@ def label(df_train,type,outfile):
         df_train['HL'][df_train['HL']>1000000]=None
         mean_bd = df_train['HL'].mean()
         df_train['HL'] = df_train['HL'].fillna(mean_bd)
-        df_train['HL'] = range(df_train['HL'])
+        df_train['HL'] = normal(df_train['HL'])
     if type == 0:
         #area
         df_train['HL'] = df_train['HL'].replace(',', '', regex=True)
@@ -244,7 +251,7 @@ def label(df_train,type,outfile):
         df_train[rows_with_sqft]
         #将sqft的数据转换为acres数据
         for i, sqft_row in df_train[rows_with_sqft].iterrows():
-            area = str(float(sqft_row['HL'][:-5])/43560)
+            area = '%.7f' % (float(sqft_row['HL'][:-5]) / 43560)
             df_train['HL'][i] = '{} acres'.format(area)
         #去除所有的非数字字符
         df_train['HL'] = df_train['HL'].replace("[\ssqft]+", '', regex=True)
@@ -252,7 +259,7 @@ def label(df_train,type,outfile):
         df_train['HL'] = pd.to_numeric(df_train['HL'])
         mean_bd = df_train['HL'].mean()
         df_train['HL'] = df_train['HL'].fillna(mean_bd)
-        df_train['HL'] = range(df_train['HL'])
+        df_train['HL'] = normal(df_train['HL'])
 
 
     #monthly cost Monthcost
@@ -261,7 +268,7 @@ def label(df_train,type,outfile):
     df_train['Monthcost'][df_train['Monthcost'] > 1000000] = None
     mean_bd = df_train['Monthcost'].mean()
     df_train['Monthcost'] = df_train['Monthcost'].fillna(mean_bd)
-    df_train['Monthcost'] = range(df_train['Monthcost'])
+    df_train['Monthcost'] = normal(df_train['Monthcost'])
     #
     # #Principal & interest
     df_train['PI'] = df_train['PI'].replace('[\D]+', '', regex=True)
@@ -269,7 +276,7 @@ def label(df_train,type,outfile):
     df_train['PI'][df_train['PI'] > 1000000] = None
     mean_bd = df_train['PI'].mean()
     df_train['PI'] = df_train['PI'].fillna(mean_bd)
-    df_train['PI'] = range(df_train['PI'])
+    df_train['PI'] = normal(df_train['PI'])
     #
     # #Property taxes
     df_train['PT'] = df_train['PT'].replace('[\D]+', '', regex=True)
@@ -277,7 +284,7 @@ def label(df_train,type,outfile):
     df_train['PT'][df_train['PT'] > 1000000] = None
     mean_bd = df_train['PT'].mean()
     df_train['PT'] = df_train['PT'].fillna(mean_bd)
-    df_train['PT'] = range(df_train['PT'])
+    df_train['PT'] = normal(df_train['PT'])
     #
     # #Home insurance
     df_train['HI'] = df_train['HI'].replace('[\D]+', '', regex=True)
@@ -285,7 +292,7 @@ def label(df_train,type,outfile):
     df_train['HI'][df_train['HI'] > 1000000] = None
     mean_bd = df_train['HI'].mean()
     df_train['HI'] = df_train['HI'].fillna(mean_bd)
-    df_train['HI'] = range(df_train['HI'])
+    df_train['HI'] = normal(df_train['HI'])
     #
     # #Home fee
     df_train['HF'] = df_train['HF'].replace('[\D]+', '', regex=True)
@@ -293,18 +300,30 @@ def label(df_train,type,outfile):
     df_train['HF'][df_train['HF'] > 1000000] = None
     mean_bd = df_train['HF'].mean()
     df_train['HF'] = df_train['HF'].fillna(mean_bd)
-    df_train['HF'] = range(df_train['HF'])
+    df_train['HF'] = normal(df_train['HF'])
 
     # #Address
     df_train['Address'] = df_train['Address'].str.extract(r'.*(\d{5}(\-\d{4})?)$')  # extract zip code from address
     df_train['Address'] = pd.to_numeric(df_train['Address'], downcast='integer')
     df_train['Address'] = df_train['Address'].replace(np.nan, 'No Data', regex=True)
     print(np.shape(df_train))
-    df_train = cluster(df_train)
+    df_train = cluster(df_train,cluter_num)
+
+    # average house price
+    df_train['Avgprice'] = df_train['label']
+    df_train['label'].astype(str)
+    df_train['Avgprice'] = pd.to_numeric(df_train['Avgprice'], downcast="float")
+    for i in range(cluter_num):
+        print("labeldata", i)
+        labeldata = df_train[df_train['label'] == i]
+
+        Avgprice = labeldata['Zestimate'].mean()
+        rows = df_train[df_train['label'] == i].index
+        for j in rows:
+            df_train['Avgprice'][j] = float(Avgprice)
 
     #df_train['label'] = pd.to_numeric(df_train['label'], downcast='integer')
-    print(pd.get_dummies(df_train['label']))
-    df_train = df_train.join(pd.get_dummies(df_train['label'],prefix="label"))
+    #df_train = df_train.join(pd.get_dummies(df_train['label'],prefix="label"))
 
     print(df_train.info())
     onehotdata = df_train[['Type','Heating','Cooling']]
@@ -312,7 +331,7 @@ def label(df_train,type,outfile):
     print(df_train.columns)
 
     # TODO(Haowen) drop price
-    to_drop = ['Type','Heating','Cooling','lat', 'lng','label', 'price']
+    to_drop = ['Type','Heating','Cooling','label', 'price']
     df_train.drop(to_drop, inplace=True, axis=1)
 
     #shuffle the data before saving to the file
@@ -320,12 +339,7 @@ def label(df_train,type,outfile):
 
     df_train.to_csv(outfile,index = 0)
 
-    target = df_train['Zestimate'].values
-    otherinfo = df_train[['Address','geo']].values
-    df_train.drop(['Zestimate','Address', 'geo'],inplace=True,axis=1)
-    data = df_train
-
-    dataset = Housedata(data,target,otherinfo)
+    dataset = formhousedata(df_train)
 
     return dataset
 
@@ -334,11 +348,7 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
         output_file = '/'.join(data_file.split('/')[0:-1]) + '/output_{}.csv'.format(data_type)
         if os.path.exists(output_file) and not rebuild:
             data1 = pd.read_csv(output_file)
-            target = data1['Zestimate'].values
-            otherinfo = data1[['Address','geo']].values
-            data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
-            data = data1
-            data_ = Housedata(data, target,otherinfo)
+            data_ = formhousedata(data1)
             return data_
         data1 = pd.read_csv(data_file)
         data1 = data1.drop(columns=['Sunscore'])
@@ -356,11 +366,7 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
 
     if os.path.exists('..\Data\output_HOA.csv'):
         data1 = pd.read_csv("..\Data\output_HOA.csv")
-        target = data1['Zestimate'].values
-        otherinfo = data1[['Address', 'geo']].values
-        data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
-        data = data1
-        data_HOA = Housedata(data,target,otherinfo)
+        data_HOA = formhousedata(data1)
 
     else:
         data1 = pd.read_csv("..\Data\Zillow_dataset_v1.0_HOA.csv")
@@ -374,11 +380,7 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
 
     if os.path.exists('..\Data\output_LOT.csv'):
         data2 = pd.read_csv("..\Data\output_LOT.csv")
-        target = data2['Zestimate'].values
-        otherinfo = data2[['Address', 'geo']].values
-        data2.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
-        data = data2
-        data_LOT = Housedata(data, target,otherinfo)
+        data_LOT = formhousedata(data2)
 
     else:
         data2 = pd.read_csv("..\Data\Zillow_dataset_v1.0_Lot.csv")
@@ -396,12 +398,7 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
 if __name__ == "__main__":
     if os.path.exists('.\Data\output_HOA.csv'):
         data1 = pd.read_csv(".\Data\output_HOA.csv")
-        target = data1['Zestimate'].values
-        otherinfo = data1[['Address', 'geo']].values
-        data1.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
-        data = data1
-
-        data_HOA = Housedata(data,target,otherinfo)
+        data_HOA = formhousedata(data1)
     else:
         data1 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
         print("data1")
@@ -415,13 +412,7 @@ if __name__ == "__main__":
 
     if os.path.exists('.\Data\output_LOT.csv'):
         data2 = pd.read_csv(".\Data\output_LOT.csv")
-        target = data2['Zestimate'].values
-        otherinfo = data2[['Address', 'geo']].values
-        data2.drop(['Zestimate','Address', 'geo'], inplace=True, axis=1)
-        data = data2
-        data_LOT = Housedata(data, target,otherinfo)
-
-
+        data_LOT = formhousedata(data2)
     else:
         data2 = pd.read_csv(".\Data\Zillow_dataset_v1.0_Lot.csv")
         data2 = data2.drop(columns=['Sunscore'])
