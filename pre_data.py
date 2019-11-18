@@ -111,6 +111,12 @@ def cluster(data):
     new_data['label'] = kmeans.labels_
     return new_data
 
+def savejson(mean,std,min,max,outfile):
+    file = open(outfile, 'w', encoding='utf-8')
+    data = {'mean': mean, "std": std, "min":min, "max":max}
+    print(data)
+    json.dump(data, file, ensure_ascii=False)
+
 #normalization
 # TODO(Haowen): try another normalization
 #def range(data):
@@ -119,15 +125,20 @@ def cluster(data):
 #    data = (data - min) / (max - min)
 #    return data
 
+#def reverse(data,min,max):
+#    data = data * (max - min) + min
+#    return data
+
 def range(data):
     data_mean = data.mean()
     data_std = data.std()
     data = (data - data_mean) / data_std
     return data
 
-def reverse(data,min,max):
-    data = data * (max - min) + min
+def reverse(data, mean, std):
+    data = data * std + mean
     return data
+
 
 def label(df_train,type,outfile):
     # zestimate
@@ -136,11 +147,29 @@ def label(df_train,type,outfile):
     df_train = df_train.dropna(subset=["Zestimate"])
     zestimate_max = df_train['Zestimate'].max()
     zestimate_min = df_train['Zestimate'].min()
+    zestimate_mean = df_train['Zestimate'].mean()
+    zestimate_std = df_train['Zestimate'].std()
     df_train['Zestimate'] = range(df_train['Zestimate'])
     # drop outliers
     df_train.sort_values(by="Zestimate", ascending=False)
     df_train = df_train[df_train['Zestimate'] <= 0.2]
-    df_train['Zestimate'] = reverse(df_train['Zestimate'],zestimate_min,zestimate_max)
+    df_train['Zestimate'] = reverse(df_train['Zestimate'],zestimate_mean,zestimate_std)
+    target_mean = df_train['Zestimate'].mean()
+    target_std = df_train['Zestimate'].std()
+    target_min = df_train['Zestimate'].min()
+    target_max = df_train['Zestimate'].max()
+    if type == 1:
+        if os.name == 'posix':
+            jsonoutfile = os.path.join(root_path, 'Data/para_HOA.json')
+        else:
+            jsonoutfile = '.\Data\para_HOA.json'
+        savejson(target_mean, target_std, target_min, target_max, jsonoutfile)
+    else:
+        if os.name == 'posix':
+            jsonoutfile = os.path.join(root_path, 'Data/para_LOT.json')
+        else:
+            jsonoutfile = '.\Data\para_LOT.json'
+        savejson(target_mean, target_std, target_min, target_max, jsonoutfile)
     #renormalization
     df_train['Zestimate'] = range(df_train['Zestimate'])
     print(np.shape(df_train))

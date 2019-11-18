@@ -107,6 +107,9 @@ def evaluation(predictions, targets, mean, std, metrics=['MAE', 'MSE', 'MdAPE', 
     outputs = []
     predictions = np.array(predictions)
     targets = np.array(targets)
+    #print('=============')
+    #for pred, tar in zip(predictions, targets):
+    #    print('pred: {}, targ: {}'.format(pred, tar))
     for metric in metrics:
         if metric == 'MAE':
             output = sum(abs(targets - predictions)) / len(targets)
