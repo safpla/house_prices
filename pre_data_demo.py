@@ -23,7 +23,7 @@ output: dataset used for training and testing
 """
 
 class Housedata():
-    def __init__(self,data=None,target=None,otherinfo=None):
+    def __init__(self,data=None,target=None,otherinfo=None,demo=False):
         k = 8
         self.data = data
         self.target = target
@@ -34,6 +34,8 @@ class Housedata():
         self.target_mean = 0
         self.target_std = 1
         self.otherinfo = otherinfo
+        if demo:
+            return
         X_train, X_test, y_train, y_test = train_test_split(self.data.values,
                                                             self.target,
                                                             test_size=0.2,
@@ -75,6 +77,7 @@ class Housedata():
         for i in np.arange(k):
             self.train_features[i] = np.concatenate(self.train_features[i])
             self.train_targets[i] = np.concatenate(self.train_targets[i])
+        return
 
 def Geocode(data):
     #zip_geo = pd.read_csv(
@@ -143,7 +146,7 @@ def formhousedata(df_train):
     df_train.drop(['Zestimate', 'Address', 'lat','lng','label'], inplace=True,
                   axis=1)
     data = df_train
-    dataset = Housedata(data, target, otherinfo)
+    dataset = Housedata(data, target, otherinfo, demo=True)
     return dataset
 
 
@@ -344,16 +347,17 @@ def label(df_train,type,outfile,len1):
 
     return dataset
 
-def pre_data(data_file=None, data_type=None, rebuild=False):
+def pre_data_demo(data_file=None, data_type=None, rebuild=False):
     if not data_file is None:
-        #output_file = '/'.join(data_file.split('/')[0:-1]) + '/cleanoutput_{}.csv'.format(data_type)
-        output_file = ".\Data\cleandata.csv"
+        output_file = '/'.join(data_file.split('/')[0:-1]) + '/cleandata.csv'
+        #output_file = ".\Data\cleandata.csv"
         # has already been predicted
         if os.path.exists(output_file) and not rebuild:
             data1 = pd.read_csv(output_file)
             data_ = formhousedata(data1)
             return data_
-        data0 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
+        data0 = pd.read_csv(os.path.join(root_path, 'Data/Zillow_dataset_v1.0_HOA.csv'))
+        #data0 = pd.read_csv(".\Data\Zillow_dataset_v1.0_HOA.csv")
         len0 = data0.shape[0]
         data1 = pd.read_csv(data_file)
         len1 = data1.shape[0]
@@ -374,9 +378,6 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
             return data_LOT
 
 
-
-
-
 if __name__ == "__main__":
     num = len(sys.argv)
     data_file = '.\Data\predict_data0.csv'
@@ -389,5 +390,5 @@ if __name__ == "__main__":
     if num >= 4:
         rebuild = sys.argv[3]
 
-    housedata = pre_data(data_file,data_type,rebuild)
+    housedata = pre_data_demo(data_file,data_type,rebuild)
 
