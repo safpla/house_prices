@@ -92,39 +92,39 @@ def train_models(data):
     config.dim_features = np.shape(X_train)[1]
     models = []
 
-    for k in range(8):
-        print('Training dnn_CV{}'.format(k))
-        dnn_model = DNN_regressor(config=config, exp_name='dnn_cv{}'.format(k))
+    #for k in range(8):
+    #    print('Training dnn_CV{}'.format(k))
+    #    dnn_model = DNN_regressor(config=config, exp_name='dnn_cv{}'.format(k))
 
-        if config.dnn_load_models:
-            load_model_path = os.path.join(root_path, 'Models', 'dnn_cv{}'.format(k))
-            dnn_model.load_model(load_model_path)
-        else:
-            dnn_model.train(data.train_features[k],
-                            data.train_targets[k],
-                            data.valid_features[k],
-                            data.valid_targets[k])
+    #    if config.dnn_load_models:
+    #        load_model_path = os.path.join(root_path, 'Models', 'dnn_cv{}'.format(k))
+    #        dnn_model.load_model(load_model_path)
+    #    else:
+    #        dnn_model.train(data.train_features[k],
+    #                        data.train_targets[k],
+    #                        data.valid_features[k],
+    #                        data.valid_targets[k])
 
-        models.append(dnn_model)
+    #    models.append(dnn_model)
 
-    print('Training random forest')
-    rfr_model = Randomforest(exp_name='random_forest')
-    if config.rfr_load_models:
-        load_model_path = os.path.join(root_path, 'Models', 'random_forest')
-        rfr_model.load_model(load_model_path)
-    else:
-        columns = data.data.columns
-        rfr_model.train(X_train, y_train, columns)
-    models.append(rfr_model)
-
-    #print('Training ridge regression')
-    #rr_model = ridge_regression(exp_name='ridge_regression')
-    #if config.rr_load_models:
-    #    load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
-    #    rr_model.load_model(load_model_path)
+    #print('Training random forest')
+    #rfr_model = Randomforest(exp_name='random_forest')
+    #if config.rfr_load_models:
+    #    load_model_path = os.path.join(root_path, 'Models', 'random_forest')
+    #    rfr_model.load_model(load_model_path)
     #else:
-    #    rr_model.train(X_train, y_train)
-    #models.append(rr_model)
+    #    columns = data.data.columns
+    #    rfr_model.train(X_train, y_train, columns)
+    #models.append(rfr_model)
+
+    print('Training ridge regression')
+    rr_model = ridge_regression(exp_name='ridge_regression')
+    if config.rr_load_models:
+        load_model_path = os.path.join(root_path, 'Models', 'ridge_regression')
+        rr_model.load_model(load_model_path)
+    else:
+        rr_model.train(X_train, y_train)
+    models.append(rr_model)
 
     return models
 
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
         models = train_models(data)
         weighted_average(models, data, data_type='HOA')
-        stacking(models, data, data_type='HOA')
+        #stacking(models, data, data_type='HOA')
     else:
         data_file_LOT = os.path.join(root_path, 'Data/SoldData-Lot-V2.0.csv')
         data_file_LOT = os.path.join(root_path, 'Data/Zillow_dataset_v1.0_Lot.csv')

@@ -23,9 +23,9 @@ class grid():
         print(np.shape(X))
         print(np.shape(y))
         grid_search.fit(X,y)
-        #print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
+        print(grid_search.best_params_, np.sqrt(-grid_search.best_score_))
         grid_search.cv_results_['mean_test_score'] = np.sqrt(-grid_search.cv_results_['mean_test_score'])
-        #print(pd.DataFrame(grid_search.cv_results_)[['params','mean_test_score','std_test_score']])
+        print(pd.DataFrame(grid_search.cv_results_)[['params','mean_test_score','std_test_score']])
         return grid_search.best_params_
 
 class performance():
@@ -76,7 +76,7 @@ class ridge_regression(Basic_regressor):
         #print("predictions",predictions)
         #predictions.reshape(-1,1)
         #response.reshape(-1,1)
-        #perf = performance.evaluation(predictions,response)
+        #perf = performance.evaluation(predictions,response, 0, 1)
         #print("MAE, MSE, MdAPE, 5pct",perf)
         return(predictions)
 

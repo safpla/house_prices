@@ -84,8 +84,8 @@ class Randomforest(Basic_regressor):
         #print(columns)
         importances = self.rfr.feature_importances_
         indices = np.argsort(importances)[::-1]
-        #for f in range(features.shape[1]):
-        #    print(str(f + 1), columns[indices[f]],importances[indices[f]])
+        for f in range(features.shape[1]):
+            print(str(f + 1), columns[indices[f]],importances[indices[f]])
 
         data = importances
         labels = columns
