@@ -182,6 +182,8 @@ def label(df_train,type,outfile,len1):
     #renormalization
     df_train['Zestimate'] = normal(df_train['Zestimate'])
     print(np.shape(df_train))
+    print(df_train)
+
 
     #price
     df_train['price'] = df_train['price'].replace('\D+', '', regex=True)
@@ -357,9 +359,11 @@ def pre_data(data_file=None, data_type=None, rebuild=False):
         len0 = data0.shape[0]
         data1 = pd.read_csv(data_file)
         len1 = data1.shape[0]
-        data = [data0,data1]
-        data1 = pd.concat(data,axis=0)
 
+        data = [data0,data1]
+
+        data1 = pd.concat(data,axis=0,ignore_index=True)
+        data1.to_csv(".\Data\\testoutput.csv", index=0)
         data1 = data1.drop(columns=['Sunscore'])
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data').rename(
             columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',
