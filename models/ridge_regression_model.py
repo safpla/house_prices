@@ -52,14 +52,11 @@ class performance():
         return outputs
 
 class ridge_regression(Basic_regressor):
-
     def __init__(self, config=None, exp_name='new_exp',ridge = None):
         self.config = config
         self.exp_name = exp_name
         self.ridge = Ridge()
 
-
-    #train
     def train(self,features,response):
         alphas = np.logspace(-3,2,50)
         best_params = grid(Ridge()).grid_get(features,response,{'alpha': alphas,'max_iter':[10000]})
@@ -69,8 +66,6 @@ class ridge_regression(Basic_regressor):
         dump(self.ridge, saved_model_path)
         print('Model saved at {}'.format(saved_model_path))
 
-
-    #predict
     def predict(self,features):
         predictions = self.ridge.predict(features)
         #print("predictions",predictions)
