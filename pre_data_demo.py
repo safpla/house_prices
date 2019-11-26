@@ -367,7 +367,6 @@ def pre_data_demo(data_file=None, data_type=None, rebuild=False):
         data = [data0,data1]
 
         data1 = pd.concat(data,axis=0,ignore_index=True)
-        data1.to_csv(".\Data\\testoutput.csv", index=0)
         data1 = data1.drop(columns=['Sunscore'])
         train1 = data1.fillna('No Data').replace('#NAME?', 'No Data').rename(
             columns={'Sale price': 'price', 'Title': 'Address', 'Year built': 'Year Built', 'HOA / Lot': 'HL',

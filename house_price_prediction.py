@@ -217,9 +217,9 @@ if __name__ == '__main__':
         input("Press Enter to continue...")
 
         # Demo
-        demo_original_data = pd.read_csv(os.path.join(root_path, 'Data/predict_data0.csv'))
+        data_file = os.path.join(root_path, 'Data/predict_data.csv')
+        demo_original_data = pd.read_csv(data_file)
         print(demo_original_data)
-        data_file = os.path.join(root_path, 'Data/predict_data0.csv')
         demo_data = pre_data_demo(data_file, config.data_type, rebuild=False)
         weighted_average_demo(models, data, demo_data, data_type='HOA')
         stacking_demo(models, data, demo_data, data_type='HOA')
