@@ -4,7 +4,7 @@ For data preprocessing, please implement the function in utilities.py.
     
 For regression model, please build your seperate .py file under the 'models' folder and user interface 'Basic_regressor'.
 
-Schedule
+The last phase schedule
 
  - 11-19: presentation
  - 11-18: meet-up, slides done
